@@ -1,0 +1,51 @@
+---
+title: Integration Test - Spaces in Filenames
+publish: true
+author: Test Author
+---
+
+# Integration Test: Images with Spaces in Filenames
+
+This document tests various ways of referencing images with spaces in their filenames.
+
+## Markdown Image Syntax
+
+Regular markdown image with spaces (unencoded):
+![Test Image](./images/test image with spaces.png)
+
+URL-encoded markdown image:
+![Test Image Encoded](./images/test%20image%20with%20spaces.png)
+
+## Wikilink Syntax
+
+Wikilink image with spaces:
+![[images/test image with spaces.png]]
+
+Wikilink image with URL encoding:
+![[images/test%20image%20with%20spaces.png]]
+
+## HTML Image Tags
+
+HTML img tag with spaces:
+<img src="./images/test image with spaces.png" alt="Test Image HTML">
+
+HTML img tag with URL encoding:
+<img src="./images/test%20image%20with%20spaces.png" alt="Test Image HTML Encoded">
+
+## Links to Images
+
+Regular link to image with spaces:
+[Download Image](./images/test image with spaces.png)
+
+URL-encoded link to image:
+[Download Image Encoded](./images/test%20image%20with%20spaces.png)
+
+## Wikilink to Image as Asset
+
+Wikilink reference to image as asset:
+[[images/test image with spaces.png]]
+
+This file should test all the space-handling functionality across:
+- Assets emitter (finding and copying the image)
+- Wikilink transformer (converting [[]] syntax)  
+- Stale links transformer (updating links appropriately)

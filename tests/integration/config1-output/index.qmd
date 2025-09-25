@@ -1,0 +1,49 @@
+---
+title: "Example Document"
+author: "Test Author"
+publish: true
+date: 2024-01-01
+---
+
+# Example Document
+
+This is an example markdown document that will be converted to Quarto format.
+
+## Features Demonstrated
+
+### Wikilinks
+
+This document contains [another-page](another-page.qmd) and Custom Title wikilinks.
+
+### Standard Links
+
+This is a [standard markdown link](another-page.qmd).
+
+### Images
+
+![Example Image](./images/example.png)
+
+### Assets
+
+Download the [PDF manual](./assets/manual.pdf).
+
+## Content
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+
+### Code Example
+
+```python
+def hello_world():
+ print("Hello, Quarto!")
+```
+
+### Lists
+
+- Item 1
+- Item 2
+- Item 3
+
+1. Numbered item 1
+2. Numbered item 2
+3. Numbered item 3

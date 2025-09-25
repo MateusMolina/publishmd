@@ -1,0 +1,17 @@
+---
+title: "QMD Page"
+publish: true
+---
+
+# QMD Page
+
+This page should be published. We have once a gain [a link to index](index.md) and the [third page](third-page.md).
+
+The [[fourth page]] contains a space, but the link should still work. Also with alias [[fourth page|this is an alias]].
+
+The [[fifth page]] also contains a space, but the page should not be published, therefore the link should be removed by the stale links transformers. The same for [[fifth page|custom alias for the page 5]].
+
+Testing md links with spaces:
+
+1. [fourth page](fourth%20page.md)
+2. [fifth page](fifth%20page.qmd)

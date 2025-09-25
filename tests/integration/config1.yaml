@@ -1,0 +1,33 @@
+# Configuration for publishmd
+
+filters:
+  # Frontmatter Filter - filters files based on YAML frontmatter
+  - name: frontmatter_filter
+    type: publishmd.filters.frontmatter_filter.FrontmatterFilter
+    config:
+      publish: true
+
+emitters:
+  # QMD Emitter - converts markdown files to Quarto
+  - name: qmd_emitter
+    type: publishmd.emitters.qmd_emitter.QmdEmitter
+
+  # Assets Emitter - finds and copies referenced assets
+  - name: assets_emitter
+    type: publishmd.emitters.assets_emitter.AssetsEmitter
+
+
+transformers:
+  # Wikilink Transformer - converts [[wikilinks]] to [standard](links)
+  - name: wikilink_transformer
+    type: publishmd.transformers.wikilink_transformer.WikilinkTransformer
+    config:
+      preserve_aliases: true
+      link_extension: ".qmd"
+
+  # Stale Links Transformer - removes links to non-emitted files
+  - name: stale_links_transformer
+    type: publishmd.transformers.stale_links_transformer.StaleLinksTransformer
+    config:
+      remove_stale_links: true
+      convert_to_text: true

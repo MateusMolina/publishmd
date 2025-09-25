@@ -1,0 +1,9 @@
+---
+title: "Private Page"
+---
+
+# Private Page
+
+This page has no attribute `publish` so it won't be emitted when using frontmatter filtering.
+
+It contains a reference to [qmd-page](qmd-page.md).
