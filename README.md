@@ -2,11 +2,11 @@
 
 Prepare markdown content for publication with configurable processing pipeline.
 
-## Use Cases
-
-1. Transform an Obsidian vault into publication-ready content for a Quarto blog. Convert wikilinks, filter content, copy assets, and apply transformations to prepare your notes for publishing.
+***Use Case 1.*** Transform an Obsidian vault into publication-ready content for a Quarto blog. Convert wikilinks, filter content, copy assets, and apply transformations to prepare your notes for publishing.
 
 ## Installation
+
+### From Source
 
 ```bash
 pip install -e .
