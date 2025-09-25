@@ -31,3 +31,7 @@ transformers:
     config:
       remove_stale_links: true
       convert_to_text: true
+
+  # Tags to Categories Transformer - converts frontmatter 'tags' to 'categories'
+  - name: tags_to_categories_transformer
+    type: publishmd.transformers.tags_to_categories_transformer.TagsToCategoriesTransformer
