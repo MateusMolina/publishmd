@@ -6,6 +6,10 @@ Prepare markdown content for publication with configurable processing pipeline.
 
 ## Installation
 
+```bash
+pip install publishmd
+```
+
 ### From Source
 
 ```bash
@@ -18,9 +22,9 @@ pip install -e .
 publishmd -c config.yaml -i /path/to/markdown -o /path/to/output
 ```
 
-## Configuration
+### Configuration
 
-Create a YAML configuration file to specify the processing pipeline, e.g.:
+Create a YAML configuration file (`your-config-name.yaml`) to specify the processing pipeline, e.g.:
 
 ```yaml
 filters:

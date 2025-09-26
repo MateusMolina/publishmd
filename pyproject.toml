@@ -7,6 +7,14 @@ name = "publishmd"
 version = "0.1.0"
 description = "Prepare markdown content for publication with configurable processing pipeline"
 authors = [{name = "Mateus Molina"}]
+license = "MIT"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3",
+    "Topic :: Office/Business",
+    "Topic :: Text Processing :: Markup :: Markdown",
+]
+keywords = ["quarto", "markdown", "publishing", "second-brain", "notes", "vault", "obsidian", "journal"]
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -17,8 +25,13 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest",
-    "black",
+    "black"
 ]
+
+[project.urls]
+Homepage = "https://github.com/MateusMolina/publishmd"
+Repository = "https://github.com/MateusMolina/publishmd.git"
+Issues = "https://github.com/MateusMolina/publishmd/issues"
 
 [project.scripts]
 publishmd = "publishmd.cli:main"
@@ -30,10 +43,6 @@ where = ["src"]
 "" = "src"
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
 markers = [
     "unit: marks tests as unit tests (fast, isolated)",
     "integration: marks tests as integration tests (slower, end-to-end)",
