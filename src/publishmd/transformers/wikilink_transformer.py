@@ -28,6 +28,10 @@ class WikilinkTransformer(Transformer):
         if not file_path.exists():
             return
 
+        # Only process Markdown and Quarto Markdown files
+        if not file_path.suffix in ['.md', '.qmd']:
+            return
+
         try:
             content = file_path.read_text(encoding="utf-8")
             original_content = content
