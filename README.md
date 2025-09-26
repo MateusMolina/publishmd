@@ -1,5 +1,9 @@
 # publishmd
 
+[![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PyPI version](https://badge.fury.io/py/publishmd.svg)](https://badge.fury.io/py/publishmd)
+
 Prepare markdown content for publication with configurable processing pipeline.
 
 ***Use Case 1.*** Transform an Obsidian vault into publication-ready content for a Quarto blog. Convert wikilinks, filter content, copy assets, and apply transformations to prepare your notes for publishing.
