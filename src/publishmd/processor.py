@@ -18,8 +18,22 @@ class Processor:
             config_path: Path to the YAML configuration file
             cli_overrides: Optional dictionary of CLI parameter overrides
         """
+        self._config_path = Path(config_path)
         self.config = ConfigLoader.load_config(config_path)
         ConfigLoader.validate_config(self.config)
+
+        # Resolve optional directories from config (relative to the config file)
+        config_dir = self._config_path.parent
+        self.input_dir: Path | None = (
+            (config_dir / self.config["input_dir"]).resolve()
+            if "input_dir" in self.config
+            else None
+        )
+        self.output_dir: Path | None = (
+            (config_dir / self.config["output_dir"]).resolve()
+            if "output_dir" in self.config
+            else None
+        )
 
         # Apply CLI overrides if provided
         if cli_overrides:
@@ -31,8 +45,10 @@ class Processor:
 
     def _apply_cli_overrides(self, overrides: Dict[str, Any]) -> None:
         """Apply CLI parameter overrides to the configuration."""
-        # This could be extended to support more sophisticated override logic
-        pass
+        if overrides.get("input_dir") is not None:
+            self.input_dir = Path(overrides["input_dir"]).resolve()
+        if overrides.get("output_dir") is not None:
+            self.output_dir = Path(overrides["output_dir"]).resolve()
 
     def _load_emitters(self) -> List[Emitter]:
         """Load emitter instances from configuration."""
@@ -49,16 +65,27 @@ class Processor:
         filter_configs = self.config.get("filters", [])
         return PluginLoader.load_filters(filter_configs)
 
-    def process(self, input_dir: Path, output_dir: Path) -> None:
+    def process(self, input_dir: Path = None, output_dir: Path = None) -> None:
         """
         Process markdown files from input directory to output directory.
 
         Args:
-            input_dir: Source directory containing markdown files
-            output_dir: Target directory for processed files
+            input_dir: Source directory containing markdown files.
+                       Falls back to ``input_dir`` defined in the config file.
+            output_dir: Target directory for processed files.
+                        Falls back to ``output_dir`` defined in the config file.
         """
-        input_dir = Path(input_dir)
-        output_dir = Path(output_dir)
+        input_dir = Path(input_dir) if input_dir is not None else self.input_dir
+        output_dir = Path(output_dir) if output_dir is not None else self.output_dir
+
+        if input_dir is None:
+            raise ValueError(
+                "input_dir must be provided via CLI argument or 'input_dir' in the config file"
+            )
+        if output_dir is None:
+            raise ValueError(
+                "output_dir must be provided via CLI argument or 'output_dir' in the config file"
+            )
 
         if not input_dir.exists():
             raise FileNotFoundError(f"Input directory not found: {input_dir}")

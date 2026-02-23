@@ -1,5 +1,10 @@
 # Configuration for publishmd
 
+# Optional: set default input/output directories relative to this config file.
+# These can be overridden by --input-dir / --output-dir CLI flags.
+input_dir: "example"
+output_dir: "config1-output"
+
 filters:
   # Frontmatter Filter - filters files based on YAML frontmatter
   - name: frontmatter_filter
@@ -7,10 +12,21 @@ filters:
     config:
       publish: true
 
+  # Ignore Folder Filter - excludes files inside the listed folders
+  # - name: ignorefolder_filter
+  #   type: publishmd.filters.ignorefolder_filter.IgnoreFolderFilter
+  #   config:
+  #     ignored_folders:
+  #       - drafts
+  #       - private
+
 emitters:
-  # QMD Emitter - converts markdown files to Quarto
-  - name: qmd_emitter
-    type: publishmd.emitters.qmd_emitter.QmdEmitter
+  # MD Emitter - copies markdown files with a configurable output extension.
+  # Use output_extension: ".qmd" for Quarto output (replaces the old QmdEmitter).
+  - name: md_emitter
+    type: publishmd.emitters.md_emitter.MdEmitter
+    config:
+      output_extension: ".qmd"
 
   # Assets Emitter - finds and copies referenced assets
   - name: assets_emitter
