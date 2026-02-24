@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Any, Dict, List
 
-from ..base import Emitter
+from ..base import Emitter, read_text_safe
 
 
 class MdEmitter(Emitter):
@@ -116,5 +116,5 @@ class MdEmitter(Emitter):
             input_path: Source file path
             output_path: Destination file path
         """
-        content = input_path.read_text(encoding="utf-8")
+        content = read_text_safe(input_path)
         output_path.write_text(content, encoding="utf-8")

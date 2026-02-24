@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Any, Dict, List
 
-from ..base import Emitter
+from ..base import Emitter, read_text_safe
 
 
 class QmdEmitter(Emitter):
@@ -120,7 +120,7 @@ class QmdEmitter(Emitter):
             input_path: Source file path
             output_path: Destination file path
         """
-        content = input_path.read_text(encoding="utf-8")
+        content = read_text_safe(input_path)
 
         # QMD content is the same as markdown
         # Future enhancements could add QMD-specific transformations
