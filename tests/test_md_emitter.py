@@ -4,22 +4,22 @@ import pytest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from publishmd.emitters.qmd_emitter import QmdEmitter
+from publishmd.emitters.md_emitter import MdEmitter
 
 
-class TestQmdEmitter:
-    def test_init(self):
-        """Test QMD emitter initialization."""
+class TestMdEmitter:
+    def test_iniM(self):
+        """Test QD emitter initialization."""
         config = {
             "file_extensions": [".md", ".markdown"],
         }
-        emitter = QmdEmitter(config)
+        emitter = MdEmitter(config)
 
         assert emitter.file_extensions == [".md", ".markdown"]
 
     def test_init_defaults(self):
         """Test QMD emitter initialization with defaults."""
-        emitter = QmdEmitter({})
+        emitter = MdEmitter({})
 
         assert emitter.file_extensions == [".md", ".markdown", ".qmd"]
 
@@ -56,7 +56,7 @@ This should not be emitted.
             # Only provide test1 in filtered list
             filtered_files = [test_file1]  # Changed from set to list
 
-            emitter = QmdEmitter({})
+            emitter = MdEmitter({"output_extension": ".qmd"})
             emitted_files = emitter.emit(filtered_files, output_dir)  # New API
 
             # Should only emit the filtered file
@@ -79,7 +79,7 @@ This should be emitted.
             test_file = input_dir / "test.md"
             test_file.write_text(content)
 
-            emitter = QmdEmitter({})
+            emitter = MdEmitter({"output_extension": ".qmd"})
             emitted_files = emitter.emit(
                 [test_file], output_dir
             )  # New API - pass list of files
@@ -91,7 +91,7 @@ This should be emitted.
 
     def test_get_output_path(self):
         """Test getting output path with correct extension."""
-        emitter = QmdEmitter({})
+        emitter = MdEmitter({})
 
         with TemporaryDirectory() as temp_dir:
             input_dir = Path(temp_dir) / "input"
@@ -102,7 +102,7 @@ This should be emitted.
 
             output_path = emitter._get_output_path(test_file, input_dir, output_dir)
 
-            assert output_path == output_dir / "test.qmd"
+            assert output_path == output_dir / "test.md"
 
     def test_emit_files(self):
         """Test emitting files to output directory."""
@@ -123,10 +123,10 @@ This is a test.
             test_file = input_dir / "test.md"
             test_file.write_text(content)
 
-            emitter = QmdEmitter({})
+            emitter = MdEmitter({})
             emitted_files = emitter.emit([test_file], output_dir)  # New API
 
             assert len(emitted_files) == 1
-            assert emitted_files[0] == output_dir / "test.qmd"
+            assert emitted_files[0] == output_dir / "test.md"
             assert emitted_files[0].exists()
             assert emitted_files[0].read_text() == content

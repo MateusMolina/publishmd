@@ -30,8 +30,8 @@ filters:
       publish: true
 
 emitters:
-  - name: qmd_emitter
-    type: publishmd.emitters.qmd_emitter.QmdEmitter
+  - name: md_emitter
+    type: publishmd.emitters.md_emitter.MdEmitter
   - name: assets_emitter
     type: publishmd.emitters.assets_emitter.AssetsEmitter
 

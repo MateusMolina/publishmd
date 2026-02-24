@@ -1,6 +1,8 @@
 ---
 title: "Another Page"
 publish: true
+modified: 2026-01-15
+created: 2025-11-01
 ---
 
 # Another Page

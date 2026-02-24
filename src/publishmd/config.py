@@ -52,6 +52,11 @@ class ConfigLoader:
                 f"Configuration must contain at least one of: {', '.join(required_sections)}"
             )
 
+        # Optional top-level input/output directories
+        for dir_key in ("input_dir", "output_dir"):
+            if dir_key in config and not isinstance(config[dir_key], str):
+                raise ValueError(f"'{dir_key}' must be a string path")
+
         for section in ["emitters", "transformers", "filters"]:
             if section in config:
                 if not isinstance(config[section], list):

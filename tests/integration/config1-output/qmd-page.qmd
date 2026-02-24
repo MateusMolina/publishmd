@@ -7,11 +7,11 @@ publish: true
 
 This page should be published. We have once a gain [a link to index](index.qmd) and the third page.
 
-The [fourth page](fourth%20page.qmd) contains a space, but the link should still work. Also with alias [this is an alias](fourth%20page.qmd).
+The [fourth page](fourth-page.qmd) contains a space, but the link should still work. Also with alias [this is an alias](fourth-page.qmd).
 
 The fifth page also contains a space, but the page should not be published, therefore the link should be removed by the stale links transformers. The same for custom alias for the page 5.
 
 Testing md links with spaces:
 
-1. [fourth page](fourth%20page.qmd)
+1. fourth page
 2. fifth page

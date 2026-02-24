@@ -5,6 +5,14 @@ from pathlib import Path
 from typing import Any, Dict, List, Set
 
 
+def read_text_safe(path: Path) -> str:
+    """Read a file as text, falling back to latin-1 if it is not valid UTF-8."""
+    try:
+        return path.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        return path.read_text(encoding="latin-1")
+
+
 class Emitter(ABC):
     """Base class for all emitters."""
 

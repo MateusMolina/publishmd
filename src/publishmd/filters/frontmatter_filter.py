@@ -5,7 +5,7 @@ import yaml
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from ..base import Filter
+from ..base import Filter, read_text_safe
 
 
 class FrontmatterFilter(Filter):
@@ -52,7 +52,7 @@ class FrontmatterFilter(Filter):
             Dictionary containing frontmatter, or None if no frontmatter found
         """
         try:
-            content = file_path.read_text(encoding="utf-8")
+            content = read_text_safe(file_path)
 
             # Check for YAML frontmatter
             if not content.startswith("---"):

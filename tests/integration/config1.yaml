@@ -1,5 +1,10 @@
 # Configuration for publishmd
 
+# Optional: set default input/output directories relative to this config file.
+# These can be overridden by --input-dir / --output-dir CLI flags.
+input_dir: "example"
+output_dir: "config1-output"
+
 filters:
   # Frontmatter Filter - filters files based on YAML frontmatter
   - name: frontmatter_filter
@@ -7,10 +12,21 @@ filters:
     config:
       publish: true
 
+  # Ignore Folder Filter - excludes files inside the listed folders
+  # - name: ignorefolder_filter
+  #   type: publishmd.filters.ignorefolder_filter.IgnoreFolderFilter
+  #   config:
+  #     ignored_folders:
+  #       - drafts
+  #       - private
+
 emitters:
-  # QMD Emitter - converts markdown files to Quarto
-  - name: qmd_emitter
-    type: publishmd.emitters.qmd_emitter.QmdEmitter
+  # MD Emitter - copies markdown files with a configurable output extension.
+  # Use output_extension: ".qmd" for Quarto output
+  - name: md_emitter
+    type: publishmd.emitters.md_emitter.MdEmitter
+    config:
+      output_extension: ".qmd"
 
   # Assets Emitter - finds and copies referenced assets
   - name: assets_emitter
@@ -25,6 +41,10 @@ transformers:
       preserve_aliases: true
       link_extension: ".qmd"
 
+  # Spaces to Dashes Transformer - renames files with spaces and updates links
+  - name: spaces_to_dashes_transformer
+    type: publishmd.transformers.spaces_to_dashes_transformer.SpacesToDashesTransformer
+
   # Stale Links Transformer - removes links to non-emitted files
   - name: stale_links_transformer
     type: publishmd.transformers.stale_links_transformer.StaleLinksTransformer
@@ -35,3 +55,17 @@ transformers:
   # Tags to Categories Transformer - converts frontmatter 'tags' to 'categories'
   - name: tags_to_categories_transformer
     type: publishmd.transformers.tags_to_categories_transformer.TagsToCategoriesTransformer
+
+  # Rename Frontmatter Field Transformer - renames a frontmatter key
+  # Multiple instances handle different renames independently.
+  - name: rename_modified
+    type: publishmd.transformers.rename_frontmatter_field_transformer.RenameFrontmatterFieldTransformer
+    config:
+      from_field: modified
+      to_field: date-modified
+
+  - name: rename_created
+    type: publishmd.transformers.rename_frontmatter_field_transformer.RenameFrontmatterFieldTransformer
+    config:
+      from_field: created
+      to_field: date

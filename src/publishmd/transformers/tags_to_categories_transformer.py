@@ -5,7 +5,7 @@ import yaml
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from ..base import Transformer
+from ..base import Transformer, read_text_safe
 
 
 class TagsToCategoriesTransformer(Transformer):
@@ -28,7 +28,7 @@ class TagsToCategoriesTransformer(Transformer):
             return
 
         try:
-            content = file_path.read_text(encoding="utf-8")
+            content = read_text_safe(file_path)
             original_content = content
 
             # Extract and update frontmatter

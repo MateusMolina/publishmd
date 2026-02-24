@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Set
 from urllib.parse import urlparse, unquote
 
-from ..base import Emitter
+from ..base import Emitter, read_text_safe
 
 
 class AssetsEmitter(Emitter):
@@ -123,7 +123,7 @@ class AssetsEmitter(Emitter):
         assets = set()
 
         try:
-            content = file_path.read_text(encoding="utf-8")
+            content = read_text_safe(file_path)
 
             # Find markdown image references: ![alt](path)
             image_pattern = r"!\[.*?\]\(([^)]+)\)"

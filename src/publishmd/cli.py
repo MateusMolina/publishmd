@@ -19,15 +19,15 @@ from .processor import Processor
     "--input-dir",
     "-i",
     type=click.Path(exists=True, file_okay=False, path_type=Path),
-    required=True,
-    help="Input directory containing markdown files",
+    default=None,
+    help="Input directory containing markdown files (overrides config file value)",
 )
 @click.option(
     "--output-dir",
     "-o",
     type=click.Path(path_type=Path),
-    required=True,
-    help="Output directory for processed files",
+    default=None,
+    help="Output directory for processed files (overrides config file value)",
 )
 @click.option(
     "--verbose",
@@ -38,26 +38,29 @@ from .processor import Processor
 def main(config: Path, input_dir: Path, output_dir: Path, verbose: bool) -> None:
     """Prepare markdown content for publication."""
 
-    if verbose:
-        click.echo(f"Loading configuration from: {config}")
-        click.echo(f"Input directory: {input_dir}")
-        click.echo(f"Output directory: {output_dir}")
-
     try:
-        # Create CLI overrides dictionary
+        # Create CLI overrides dictionary (only set dirs when explicitly provided)
         cli_overrides: Dict[str, Any] = {
             "verbose": verbose,
+            "input_dir": input_dir,
+            "output_dir": output_dir,
         }
 
         # Initialize processor
         processor = Processor(config, cli_overrides)
 
+        resolved_input = processor.input_dir
+        resolved_output = processor.output_dir
+
         if verbose:
+            click.echo(f"Loading configuration from: {config}")
+            click.echo(f"Input directory: {resolved_input}")
+            click.echo(f"Output directory: {resolved_output}")
             click.echo(f"Loaded {len(processor.emitters)} emitters")
             click.echo(f"Loaded {len(processor.transformers)} transformers")
 
-        # Process files
-        processor.process(input_dir, output_dir)
+        # Process files (dirs already resolved inside the processor)
+        processor.process()
 
         click.echo("Conversion completed successfully!")
 
