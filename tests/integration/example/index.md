@@ -15,6 +15,8 @@ This is an example markdown document that will be converted to Quarto format.
 
 This document contains [[another-page]] and [[third-page|Custom Title]] wikilinks.
 
+It also links to [[fourth page]] (a page whose filename has a space).
+
 ### Standard Links
 
 This is a [standard markdown link](another-page.md).

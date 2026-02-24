@@ -41,6 +41,10 @@ transformers:
       preserve_aliases: true
       link_extension: ".qmd"
 
+  # Spaces to Dashes Transformer - renames files with spaces and updates links
+  - name: spaces_to_dashes_transformer
+    type: publishmd.transformers.spaces_to_dashes_transformer.SpacesToDashesTransformer
+
   # Stale Links Transformer - removes links to non-emitted files
   - name: stale_links_transformer
     type: publishmd.transformers.stale_links_transformer.StaleLinksTransformer
@@ -51,3 +55,17 @@ transformers:
   # Tags to Categories Transformer - converts frontmatter 'tags' to 'categories'
   - name: tags_to_categories_transformer
     type: publishmd.transformers.tags_to_categories_transformer.TagsToCategoriesTransformer
+
+  # Rename Frontmatter Field Transformer - renames a frontmatter key
+  # Multiple instances handle different renames independently.
+  - name: rename_modified
+    type: publishmd.transformers.rename_frontmatter_field_transformer.RenameFrontmatterFieldTransformer
+    config:
+      from_field: modified
+      to_field: date-modified
+
+  - name: rename_created
+    type: publishmd.transformers.rename_frontmatter_field_transformer.RenameFrontmatterFieldTransformer
+    config:
+      from_field: created
+      to_field: date

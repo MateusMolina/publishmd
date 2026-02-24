@@ -1,6 +1,8 @@
 ---
-title: "Another Page"
+date: 2025-11-01
+date-modified: 2026-01-15
 publish: true
+title: Another Page
 ---
 
 # Another Page
