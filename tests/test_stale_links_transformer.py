@@ -251,7 +251,7 @@ This is a  that should be removed.
             test_file = temp_path / "test.qmd"
             test_file.write_text(content)
 
-            # Create emitted QMD files (simulating what QmdEmitter would produce)
+            # Create emitted QMD files
             index_qmd = temp_path / "index.qmd"
             another_qmd = temp_path / "another-page.qmd"
             index_qmd.write_text("# Index content")

@@ -19,12 +19,13 @@ filters:
       publish: true
 
 emitters:
-  - name: qmd_emitter
-    type: publishmd.emitters.qmd_emitter.QmdEmitter
+  - name: md_emitter
+    type: publishmd.emitters.md_emitter.MdEmitter
     config:
       file_extensions:
         - ".md"
         - ".markdown"
+      output_extension: ".qmd"
 
   - name: assets_emitter
     type: publishmd.emitters.assets_emitter.AssetsEmitter
@@ -140,12 +141,13 @@ This should NOT be processed.
         # Create a temporary config file without frontmatter filter
         config_content = """
 emitters:
-  - name: qmd_emitter
-    type: publishmd.emitters.qmd_emitter.QmdEmitter
+  - name: md_emitter
+    type: publishmd.emitters.md_emitter.MdEmitter
     config:
       file_extensions:
         - ".md"
         - ".markdown"
+      output_extension: ".qmd"
 
 transformers: []
 """

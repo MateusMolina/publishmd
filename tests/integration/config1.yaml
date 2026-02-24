@@ -22,7 +22,7 @@ filters:
 
 emitters:
   # MD Emitter - copies markdown files with a configurable output extension.
-  # Use output_extension: ".qmd" for Quarto output (replaces the old QmdEmitter).
+  # Use output_extension: ".qmd" for Quarto output
   - name: md_emitter
     type: publishmd.emitters.md_emitter.MdEmitter
     config:
