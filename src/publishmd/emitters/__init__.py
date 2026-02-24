@@ -1,6 +1,6 @@
 """Emitters package."""
 
 from .md_emitter import MdEmitter
-from .qmd_emitter import QmdEmitter
+from .assets_emitter import AssetsEmitter
 
-__all__ = ["MdEmitter", "QmdEmitter"]
+__all__ = ["MdEmitter", "AssetsEmitter"]
