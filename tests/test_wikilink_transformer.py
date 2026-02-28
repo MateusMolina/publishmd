@@ -295,6 +295,66 @@ This links to [Custom Title](fourth%20page.qmd).
         relative_path = transformer._get_relative_path(from_file, to_file)
         assert relative_path == "fourth%20page.qmd"
 
+    def test_transform_wikilink_with_spaces_target_already_dashed(self):
+        """Wikilink resolves correctly when the target file was already renamed to
+        use dashes (i.e. spaces_to_dashes_transformer ran before wikilink_transformer).
+
+        The link target in the source note still uses the human-readable spaced name
+        (e.g. ``[[fourth page]]``) but the only file present in copied_files is the
+        already-dashed ``fourth-page.qmd``.  _find_target_file must match via the
+        space→dash slug variant so the link is resolved rather than silently dropped.
+        """
+        content = """# Test Document
+
+This links to [[fourth page]].
+"""
+
+        expected = """# Test Document
+
+This links to [fourth page](fourth-page.qmd).
+"""
+
+        with TemporaryDirectory() as temp_dir:
+            current_file = Path(temp_dir) / "current.qmd"
+            # Target file already has dashes — spaces_to_dashes ran first
+            target_file = Path(temp_dir) / "fourth-page.qmd"
+
+            current_file.write_text(content)
+            target_file.write_text("# Fourth Page")
+            copied_files = [current_file, target_file]
+
+            transformer = WikilinkTransformer({})
+            transformer.transform(current_file, copied_files)
+
+            result = current_file.read_text()
+            assert result == expected
+
+    def test_transform_wikilink_with_alias_target_already_dashed(self):
+        """Same as above but with an alias — alias must be preserved in the output."""
+        content = """# Test Document
+
+This links to [[fourth page|My Link]].
+"""
+
+        expected = """# Test Document
+
+This links to [My Link](fourth-page.qmd).
+"""
+
+        with TemporaryDirectory() as temp_dir:
+            current_file = Path(temp_dir) / "current.qmd"
+            target_file = Path(temp_dir) / "fourth-page.qmd"
+
+            current_file.write_text(content)
+            target_file.write_text("# Fourth Page")
+            copied_files = [current_file, target_file]
+
+            transformer = WikilinkTransformer({"preserve_aliases": True})
+            transformer.transform(current_file, copied_files)
+
+            result = current_file.read_text()
+            assert result == expected
+
     def test_transform_wikilink_image_syntax(self):
         """Test transforming wikilink image syntax ![[image.png]] to ![](./path/image.png)."""
         content = """# Test Document
