@@ -9,7 +9,29 @@ from ..base import Transformer, read_text_safe
 
 
 class WikilinkTransformer(Transformer):
-    """Transformer that converts wikilinks to standard markdown links."""
+    """Transformer that converts Obsidian-style wikilinks to standard markdown links.
+
+    Handles both plain wikilinks and aliased wikilinks::
+
+        [[Page Name]]           →  [Page Name](page-name.qmd)
+        [[Page Name|My alias]]  →  [My alias](page-name.qmd)
+        ![[image.png]]          →  ![image.png](image.png)
+
+    Config keys:
+        preserve_aliases (bool): When ``True`` (default), the alias part of
+                                  ``[[target|alias]]`` is used as link text.
+                                  When ``False``, the target name is always used.
+        link_extension   (str):  Extension appended to internal page links.
+                                  Defaults to ``".qmd"``.
+
+    Example YAML::
+
+        - name: wikilinks
+          type: publishmd.transformers.wikilink_transformer.WikilinkTransformer
+          config:
+            preserve_aliases: true
+            link_extension: ".qmd"
+    """
 
     def __init__(self, config: Dict[str, Any]):
         """Initialize the wikilink transformer."""
@@ -17,13 +39,13 @@ class WikilinkTransformer(Transformer):
         self.preserve_aliases = config.get("preserve_aliases", True)
         self.link_extension = config.get("link_extension", ".qmd")
 
-    def transform(self, file_path: Path, emitted_files: List[Path]) -> None:
+    def transform(self, file_path: Path, copied_files: List[Path]) -> None:
         """
         Transform wikilinks in a file to standard markdown links.
 
         Args:
             file_path: Path to the file to transform
-            emitted_files: List of all emitted files for reference
+            copied_files: List of all copied files for reference
         """
         if not file_path.exists():
             return
@@ -44,9 +66,9 @@ class WikilinkTransformer(Transformer):
                 # URL decode the image path to handle %20 spaces etc.
                 decoded_image_path = unquote(image_path)
 
-                # Find the corresponding image file in emitted files
+                # Find the corresponding image file in copied files
                 target_path = self._find_target_file(
-                    decoded_image_path, emitted_files, file_path
+                    decoded_image_path, copied_files, file_path
                 )
 
                 if target_path:
@@ -77,9 +99,9 @@ class WikilinkTransformer(Transformer):
                 # URL decode the link target to handle %20 spaces etc.
                 decoded_link_target = unquote(link_target)
 
-                # Find the corresponding file in emitted files
+                # Find the corresponding file in copied files
                 target_path = self._find_target_file(
-                    decoded_link_target, emitted_files, file_path
+                    decoded_link_target, copied_files, file_path
                 )
 
                 if target_path:
@@ -110,14 +132,14 @@ class WikilinkTransformer(Transformer):
             pass
 
     def _find_target_file(
-        self, link_target: str, emitted_files: List[Path], current_file: Path
+        self, link_target: str, copied_files: List[Path], current_file: Path
     ) -> Path:
         """
         Find the target file for a wikilink.
 
         Args:
             link_target: The target of the wikilink
-            emitted_files: List of emitted files
+            copied_files: List of copied files
             current_file: Current file being processed
 
         Returns:
@@ -131,7 +153,7 @@ class WikilinkTransformer(Transformer):
         target_filename = Path(link_target).name
 
         # Try exact filename matches first (with extension if provided)
-        for file_path in emitted_files:
+        for file_path in copied_files:
             if file_path.name == link_target:
                 return file_path
             # Also try matching just the filename part
@@ -139,7 +161,7 @@ class WikilinkTransformer(Transformer):
                 return file_path
 
         # Try matching by relative path from a common directory
-        for file_path in emitted_files:
+        for file_path in copied_files:
             # Get the last parts of the path to match against link_target
             try:
                 # If link_target is "images/file.png", try to find a file
@@ -155,14 +177,14 @@ class WikilinkTransformer(Transformer):
                 continue
 
         # Try exact stem matches (without extension)
-        for file_path in emitted_files:
+        for file_path in copied_files:
             if file_path.stem == link_target:
                 return file_path
 
         # Try with common extensions if no extension was provided
         if "." not in link_target:
             target_with_ext = link_target + self.link_extension
-            for file_path in emitted_files:
+            for file_path in copied_files:
                 if file_path.name == target_with_ext:
                     return file_path
 
@@ -177,13 +199,13 @@ class WikilinkTransformer(Transformer):
 
         for variant in slug_variants:
             if variant:  # Make sure variant is not empty
-                for file_path in emitted_files:
+                for file_path in copied_files:
                     if file_path.stem == variant:
                         return file_path
 
         # Try case-insensitive match
         link_target_lower = link_target.lower()
-        for file_path in emitted_files:
+        for file_path in copied_files:
             if file_path.name.lower() == link_target_lower:
                 return file_path
             if file_path.stem.lower() == link_target_lower:

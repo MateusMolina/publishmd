@@ -40,8 +40,8 @@ class TestSpacesToDashesTransformer:
             assert dashed.exists()
             assert not spaced.exists()
 
-    def test_emitted_files_updated_in_place(self):
-        """The emitted_files list is mutated to reflect renamed paths."""
+    def test_copied_files_updated_in_place(self):
+        """The copied_files list is mutated to reflect renamed paths."""
         with TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             spaced = tmp_path / "a b.qmd"

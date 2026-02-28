@@ -1,4 +1,4 @@
-"""Stale links transformer - removes markdown links to non-emitted files."""
+"""Stale links transformer - removes markdown links to non-copied files."""
 
 import re
 from pathlib import Path
@@ -9,7 +9,28 @@ from ..base import Transformer, read_text_safe
 
 
 class StaleLinksTransformer(Transformer):
-    """Transformer that removes stale markdown links to non-emitted files."""
+    """Transformer that removes or converts markdown links to files not in the output.
+
+    After filtering and copying, some internal links may point to files that
+    were intentionally excluded.  This transformer detects those *stale* links
+    and either removes them entirely or converts them to plain text.
+
+    Config keys:
+        remove_stale_links (bool): When ``True`` (default), stale links are
+                                    deleted from the document.
+        convert_to_text    (bool): When ``True``, the link is replaced with its
+                                    visible text instead of being deleted.
+                                    Takes precedence over ``remove_stale_links``
+                                    when both are ``True``.
+
+    Example YAML::
+
+        - name: stale_links
+          type: publishmd.transformers.stale_links_transformer.StaleLinksTransformer
+          config:
+            remove_stale_links: true
+            convert_to_text: true
+    """
 
     def __init__(self, config: Dict[str, Any]):
         """Initialize the stale links transformer."""
@@ -17,13 +38,13 @@ class StaleLinksTransformer(Transformer):
         self.remove_stale_links = config.get("remove_stale_links", True)
         self.convert_to_text = config.get("convert_to_text", False)
 
-    def transform(self, file_path: Path, emitted_files: List[Path]) -> None:
+    def transform(self, file_path: Path, copied_files: List[Path]) -> None:
         """
         Remove or convert stale markdown links in a file.
 
         Args:
             file_path: Path to the file to transform
-            emitted_files: List of all emitted files for reference
+            copied_files: List of all copied files for reference
         """
         if not file_path.exists():
             return
@@ -44,15 +65,15 @@ class StaleLinksTransformer(Transformer):
                 if self._is_url(link_path):
                     return match.group(0)
 
-                # Check if the linked file exists in emitted files
+                # Check if the linked file exists in copied files
                 target_path = self._resolve_link_path(
-                    link_path, file_path, emitted_files
+                    link_path, file_path, copied_files
                 )
 
-                if target_path and self._is_emitted_file(target_path, emitted_files):
+                if target_path and self._is_copied_file(target_path, copied_files):
                     # Link is valid - check if we need to update the extension
                     updated_link_path = self._get_updated_link_path(
-                        link_path, target_path, emitted_files
+                        link_path, target_path, copied_files
                     )
                     if updated_link_path != link_path:
                         return f"[{link_text}]({updated_link_path})"
@@ -86,7 +107,7 @@ class StaleLinksTransformer(Transformer):
         return bool(parsed.scheme and parsed.netloc)
 
     def _resolve_link_path(
-        self, link_path: str, current_file: Path, emitted_files: List[Path]
+        self, link_path: str, current_file: Path, copied_files: List[Path]
     ) -> Path:
         """
         Resolve a link path to an actual file path.
@@ -94,7 +115,7 @@ class StaleLinksTransformer(Transformer):
         Args:
             link_path: The link path from the markdown
             current_file: Current file being processed
-            emitted_files: List of emitted files
+            copied_files: List of copied files
 
         Returns:
             Resolved path, or None if not resolvable
@@ -110,8 +131,8 @@ class StaleLinksTransformer(Transformer):
             if decoded_path.startswith("/"):
                 # Absolute path - try relative to project root
                 # Use the first emitted file's parent as the root directory
-                if emitted_files:
-                    root_dir = emitted_files[0].parent
+                if copied_files:
+                    root_dir = copied_files[0].parent
                     while root_dir.parent != root_dir:  # Find project root
                         potential_root = root_dir.parent
                         if any(
@@ -142,20 +163,20 @@ class StaleLinksTransformer(Transformer):
 
         return None
 
-    def _is_emitted_file(self, target_path: Path, emitted_files: List[Path]) -> bool:
+    def _is_copied_file(self, target_path: Path, copied_files: List[Path]) -> bool:
         """
         Check if a target path corresponds to an emitted file.
 
         Args:
             target_path: Path to check
-            emitted_files: List of emitted files
+            copied_files: List of copied files
 
         Returns:
-            True if the target path is in the emitted files
+            True if the target path is in the copied files
         """
         try:
             target_resolved = target_path.resolve()
-            for emitted_file in emitted_files:
+            for emitted_file in copied_files:
                 emitted_resolved = emitted_file.resolve()
 
                 # Exact match
@@ -179,7 +200,7 @@ class StaleLinksTransformer(Transformer):
         return False
 
     def _get_updated_link_path(
-        self, original_link_path: str, target_path: Path, emitted_files: List[Path]
+        self, original_link_path: str, target_path: Path, copied_files: List[Path]
     ) -> str:
         """
         Get the updated link path if the target file was emitted with a different extension.
@@ -187,7 +208,7 @@ class StaleLinksTransformer(Transformer):
         Args:
             original_link_path: Original link path from the markdown
             target_path: Resolved target path
-            emitted_files: List of emitted files
+            copied_files: List of copied files
 
         Returns:
             Updated link path, properly URL-encoded
@@ -203,7 +224,7 @@ class StaleLinksTransformer(Transformer):
             target_resolved = target_path.resolve()
 
             # Find the corresponding emitted file
-            for emitted_file in emitted_files:
+            for emitted_file in copied_files:
                 emitted_resolved = emitted_file.resolve()
 
                 # Check if the resolved target matches an emitted .qmd file

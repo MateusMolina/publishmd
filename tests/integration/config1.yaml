@@ -11,6 +11,12 @@ filters:
     type: publishmd.filters.frontmatter_filter.FrontmatterFilter
     config:
       publish: true
+      sanity_check: true
+
+  # Referenced Assets Filter - drops asset files not referenced by any kept text file
+  - name: referenced_assets_filter
+    type: publishmd.filters.referenced_assets_filter.ReferencedAssetsFilter
+    config: {}
 
   # Ignore Folder Filter - excludes files inside the listed folders
   # - name: ignorefolder_filter
@@ -20,20 +26,16 @@ filters:
   #       - drafts
   #       - private
 
-emitters:
-  # MD Emitter - copies markdown files with a configurable output extension.
-  # Use output_extension: ".qmd" for Quarto output
-  - name: md_emitter
-    type: publishmd.emitters.md_emitter.MdEmitter
-    config:
-      output_extension: ".qmd"
-
-  # Assets Emitter - finds and copies referenced assets
-  - name: assets_emitter
-    type: publishmd.emitters.assets_emitter.AssetsEmitter
-
-
 transformers:
+  # Change Extension Transformer - renames .md output files to .qmd
+  - name: md_to_qmd
+    type: publishmd.transformers.change_extension_transformer.ChangeExtensionTransformer
+    config:
+      from_extensions:
+        - ".md"
+        - ".markdown"
+      to_extension: ".qmd"
+
   # Wikilink Transformer - converts [[wikilinks]] to [standard](links)
   - name: wikilink_transformer
     type: publishmd.transformers.wikilink_transformer.WikilinkTransformer

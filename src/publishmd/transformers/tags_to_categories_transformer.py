@@ -9,20 +9,30 @@ from ..base import Transformer, read_text_safe
 
 
 class TagsToCategoriesTransformer(Transformer):
-    """Transformer that converts frontmatter 'tags' field to 'categories'."""
+    """Transformer that renames the frontmatter ``tags`` field to ``categories``.
+
+    Useful when migrating from Obsidian (``tags:``) to a Quarto or Jekyll
+    blog that uses ``categories:`` for taxonomy.
+
+    This transformer takes no configuration keys.  A single entry in the
+    pipeline is sufficient::
+
+        - name: tags_to_categories
+          type: publishmd.transformers.tags_to_categories_transformer.TagsToCategoriesTransformer
+    """
 
     def __init__(self, config: Dict[str, Any]):
         """Initialize the tags to categories transformer."""
         super().__init__(config)
         # No specific config needed for this transformer
 
-    def transform(self, file_path: Path, emitted_files: List[Path]) -> None:
+    def transform(self, file_path: Path, copied_files: List[Path]) -> None:
         """
         Transform frontmatter by converting 'tags' to 'categories'.
 
         Args:
             file_path: Path to the file to transform
-            emitted_files: List of all emitted files for reference
+            copied_files: List of all copied files for reference
         """
         if not file_path.exists():
             return

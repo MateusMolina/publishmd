@@ -32,9 +32,9 @@ class TestWikilinkTransformer:
             file2 = Path(temp_dir) / "other.qmd"
             current_file = Path(temp_dir) / "current.qmd"
 
-            emitted_files = [file1, file2, current_file]
+            copied_files = [file1, file2, current_file]
 
-            found = transformer._find_target_file("target", emitted_files, current_file)
+            found = transformer._find_target_file("target", copied_files, current_file)
             assert found == file1
 
     def test_find_target_file_with_extension(self):
@@ -45,10 +45,10 @@ class TestWikilinkTransformer:
             file1 = Path(temp_dir) / "target.qmd"
             current_file = Path(temp_dir) / "current.qmd"
 
-            emitted_files = [file1, current_file]
+            copied_files = [file1, current_file]
 
             found = transformer._find_target_file(
-                "target.qmd", emitted_files, current_file
+                "target.qmd", copied_files, current_file
             )
             assert found == file1
 
@@ -60,9 +60,9 @@ class TestWikilinkTransformer:
             file1 = Path(temp_dir) / "Target.qmd"
             current_file = Path(temp_dir) / "current.qmd"
 
-            emitted_files = [file1, current_file]
+            copied_files = [file1, current_file]
 
-            found = transformer._find_target_file("target", emitted_files, current_file)
+            found = transformer._find_target_file("target", copied_files, current_file)
             assert found == file1
 
     def test_find_target_file_not_found(self):
@@ -73,10 +73,10 @@ class TestWikilinkTransformer:
             file1 = Path(temp_dir) / "other.qmd"
             current_file = Path(temp_dir) / "current.qmd"
 
-            emitted_files = [file1, current_file]
+            copied_files = [file1, current_file]
 
             found = transformer._find_target_file(
-                "nonexistent", emitted_files, current_file
+                "nonexistent", copied_files, current_file
             )
             assert found is None
 
@@ -127,10 +127,10 @@ This links to [target-page](target.qmd).
             target_file = Path(temp_dir) / "target.qmd"
 
             current_file.write_text(content)
-            emitted_files = [current_file, target_file]
+            copied_files = [current_file, target_file]
 
             transformer = WikilinkTransformer({})
-            transformer.transform(current_file, emitted_files)
+            transformer.transform(current_file, copied_files)
 
             result = current_file.read_text()
             assert result == expected
@@ -152,10 +152,10 @@ This links to [Custom Title](target.qmd).
             target_file = Path(temp_dir) / "target.qmd"
 
             current_file.write_text(content)
-            emitted_files = [current_file, target_file]
+            copied_files = [current_file, target_file]
 
             transformer = WikilinkTransformer({"preserve_aliases": True})
-            transformer.transform(current_file, emitted_files)
+            transformer.transform(current_file, copied_files)
 
             result = current_file.read_text()
             assert result == expected
@@ -177,10 +177,10 @@ This links to [target-page](target.qmd).
             target_file = Path(temp_dir) / "target.qmd"
 
             current_file.write_text(content)
-            emitted_files = [current_file, target_file]
+            copied_files = [current_file, target_file]
 
             transformer = WikilinkTransformer({"preserve_aliases": False})
-            transformer.transform(current_file, emitted_files)
+            transformer.transform(current_file, copied_files)
 
             result = current_file.read_text()
             assert result == expected
@@ -201,10 +201,10 @@ This links to nonexistent-page.
             current_file = Path(temp_dir) / "current.qmd"
 
             current_file.write_text(content)
-            emitted_files = [current_file]
+            copied_files = [current_file]
 
             transformer = WikilinkTransformer({})
-            transformer.transform(current_file, emitted_files)
+            transformer.transform(current_file, copied_files)
 
             result = current_file.read_text()
             assert result == expected
@@ -225,10 +225,10 @@ This links to Custom Title.
             current_file = Path(temp_dir) / "current.qmd"
 
             current_file.write_text(content)
-            emitted_files = [current_file]
+            copied_files = [current_file]
 
             transformer = WikilinkTransformer({})
-            transformer.transform(current_file, emitted_files)
+            transformer.transform(current_file, copied_files)
 
             result = current_file.read_text()
             assert result == expected
@@ -251,10 +251,10 @@ This links to [fourth page](fourth%20page.qmd).
 
             current_file.write_text(content)
             target_file.write_text("# Fourth Page")
-            emitted_files = [current_file, target_file]
+            copied_files = [current_file, target_file]
 
             transformer = WikilinkTransformer({})
-            transformer.transform(current_file, emitted_files)
+            transformer.transform(current_file, copied_files)
 
             result = current_file.read_text()
             assert result == expected
@@ -277,10 +277,10 @@ This links to [Custom Title](fourth%20page.qmd).
 
             current_file.write_text(content)
             target_file.write_text("# Fourth Page")
-            emitted_files = [current_file, target_file]
+            copied_files = [current_file, target_file]
 
             transformer = WikilinkTransformer({})
-            transformer.transform(current_file, emitted_files)
+            transformer.transform(current_file, copied_files)
 
             result = current_file.read_text()
             assert result == expected
@@ -326,14 +326,14 @@ Wikilink image with spaces:
             (temp_path / "image with spaces.png").write_text("fake png with spaces")
 
             # Simulate emitted files list
-            emitted_files = [
+            copied_files = [
                 temp_path / "test_image.png",
                 images_dir / "nested_image.jpg",
                 temp_path / "image with spaces.png",
             ]
 
             transformer = WikilinkTransformer({})
-            transformer.transform(source_file, emitted_files)
+            transformer.transform(source_file, copied_files)
 
             transformed_content = source_file.read_text()
 
@@ -371,13 +371,13 @@ URL-encoded nested path:
             (images_dir / "nested image.jpg").write_text("fake nested jpg")
 
             # Simulate emitted files list
-            emitted_files = [
+            copied_files = [
                 temp_path / "image with spaces.png",
                 images_dir / "nested image.jpg",
             ]
 
             transformer = WikilinkTransformer({})
-            transformer.transform(source_file, emitted_files)
+            transformer.transform(source_file, copied_files)
 
             transformed_content = source_file.read_text()
 

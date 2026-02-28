@@ -56,7 +56,7 @@ def main(config: Path, input_dir: Path, output_dir: Path, verbose: bool) -> None
             click.echo(f"Loading configuration from: {config}")
             click.echo(f"Input directory: {resolved_input}")
             click.echo(f"Output directory: {resolved_output}")
-            click.echo(f"Loaded {len(processor.emitters)} emitters")
+            click.echo(f"Loaded {len(processor.filters)} filters")
             click.echo(f"Loaded {len(processor.transformers)} transformers")
 
         # Process files (dirs already resolved inside the processor)
