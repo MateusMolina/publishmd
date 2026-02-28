@@ -243,3 +243,51 @@ class TestSpacesToDashesTransformer:
             assert dashed.exists()
             # emitted still holds the dashed path
             assert emitted[0] == dashed
+
+    # ------------------------------------------------------------------
+    # Regression: links inside a renamed file must be updated
+    # ------------------------------------------------------------------
+
+    def test_updates_links_inside_file_with_spaces_in_own_name(self):
+        """Links inside a file whose own name contains spaces must also be
+        rewritten after renaming.
+
+        Regression: previously ``_update_links`` was skipped for the file
+        being renamed because ``file_path.exists()`` returned False after
+        ``_precompute_renames`` already moved it on disk.  As a result,
+        URL-encoded links like ``(2025-09%20thinking%20about….qmd)`` were
+        left pointing at the old (now non-existent) spaced filename and later
+        stripped as stale links.
+        """
+        with TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+
+            # Simulate output after wikilink_transformer has already converted
+            # [[2025-09 thinking about note taking system|reorganized my main vault]]
+            # into an mdlink with a URL-encoded target.
+            postmortem = tmp_path / "2025-11 Postmortem of a Second Brain.qmd"
+            target_note = tmp_path / "2025-09 thinking about note taking system.qmd"
+
+            postmortem.write_text(
+                "I [reorganized my main vault]"
+                "(2025-09%20thinking%20about%20note%20taking%20system.qmd), text.",
+                encoding="utf-8",
+            )
+            target_note.write_text("# Target", encoding="utf-8")
+
+            emitted = [postmortem, target_note]
+
+            t = SpacesToDashesTransformer({})
+            for fp in list(emitted):
+                t.transform(fp, emitted)
+
+            renamed_postmortem = tmp_path / "2025-11-Postmortem-of-a-Second-Brain.qmd"
+            assert renamed_postmortem.exists(), "postmortem file should have been renamed"
+
+            content = renamed_postmortem.read_text(encoding="utf-8")
+            assert "2025-09-thinking-about-note-taking-system.qmd" in content, (
+                "link inside the renamed file should point to the dashed filename"
+            )
+            assert "2025-09%20thinking%20about%20note%20taking%20system.qmd" not in content, (
+                "URL-encoded spaced link should no longer appear after transformation"
+            )

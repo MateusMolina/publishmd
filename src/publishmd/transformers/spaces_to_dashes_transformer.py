@@ -42,8 +42,20 @@ class SpacesToDashesTransformer(Transformer):
                            in-place when files are renamed.
         """
         if not self._initialized:
-            self._precompute_renames(copied_files)
+            renamed_paths = self._precompute_renames(copied_files)
             self._initialized = True
+            # Files that were renamed will not be visited again by the processor
+            # (it holds a snapshot of the old paths and skips missing ones).
+            # Update links inside each renamed file right here, now that the
+            # full rename map is built.
+            for new_path in renamed_paths:
+                if new_path.suffix.lower() in _TEXT_EXTENSIONS:
+                    self._update_links(new_path)
+
+        # The file itself may have been renamed by _precompute_renames;
+        # resolve file_path to its new name so we don't double-skip it.
+        if not file_path.exists() and file_path.name in self._rename_map:
+            file_path = file_path.parent / self._rename_map[file_path.name]
 
         if not file_path.exists():
             return
@@ -58,12 +70,16 @@ class SpacesToDashesTransformer(Transformer):
     # Private helpers
     # ------------------------------------------------------------------
 
-    def _precompute_renames(self, copied_files: List[Path]) -> None:
+    def _precompute_renames(self, copied_files: List[Path]) -> List[Path]:
         """Rename every file in *copied_files* whose name contains spaces.
 
         Updates *copied_files* in-place so the processor loop (and later
         transformers) work with the corrected paths.
+
+        Returns:
+            List of new (post-rename) paths for every file that was renamed.
         """
+        renamed_new_paths: List[Path] = []
         for i, file_path in enumerate(copied_files):
             if " " not in file_path.name:
                 continue
@@ -83,6 +99,9 @@ class SpacesToDashesTransformer(Transformer):
 
             # Propagate the rename back into the shared copied_files list
             copied_files[i] = new_path
+            renamed_new_paths.append(new_path)
+
+        return renamed_new_paths
 
     def _update_links(self, file_path: Path) -> None:
         """Rewrite markdown/HTML links in *file_path* that point to renamed files.

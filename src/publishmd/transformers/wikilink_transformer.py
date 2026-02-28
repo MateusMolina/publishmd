@@ -190,6 +190,8 @@ class WikilinkTransformer(Transformer):
 
         # Try slug-style matching: various transformations
         slug_variants = [
+            link_target.replace(" ", "-"),  # "note taking" -> "note-taking" (spaces_to_dashes ran first)
+            link_target.replace(" ", "_"),  # "note taking" -> "note_taking"
             link_target.replace("-", ""),  # "target-page" -> "targetpage"
             link_target.replace("-", "_"),  # "target-page" -> "target_page"
             link_target.replace("_", "-"),  # "target_page" -> "target-page"
