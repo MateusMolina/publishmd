@@ -53,6 +53,17 @@ class StaleLinksTransformer(Transformer):
             content = read_text_safe(file_path)
             original_content = content
 
+            # Separate YAML frontmatter from body so that whitespace cleanup
+            # (see below) never touches frontmatter indentation.
+            _FM_RE = re.compile(r"^---\n.*?\n---\n", re.DOTALL)
+            fm_match = _FM_RE.match(content)
+            if fm_match:
+                frontmatter_block = content[: fm_match.end()]
+                body = content[fm_match.end() :]
+            else:
+                frontmatter_block = ""
+                body = content
+
             # Find all markdown links: [text](path) but exclude image links ![text](path)
             # Use negative lookbehind to exclude links preceded by !
             link_pattern = r"(?<!!)\[([^\]]+)\]\(([^)]+)\)"
@@ -88,11 +99,16 @@ class StaleLinksTransformer(Transformer):
                     else:
                         return match.group(0)
 
-            content = re.sub(link_pattern, replace_stale_link, content)
+            body = re.sub(link_pattern, replace_stale_link, body)
 
-            # Clean up excessive spacing (3 or more spaces) and excessive newlines
-            content = re.sub(r"   +", " ", content)  # 3 or more spaces -> 1 space
-            content = re.sub(r"\n\n\n+", "\n\n", content)
+            # Collapse runs of 3+ spaces that appear *between* non-whitespace
+            # characters — i.e. inline prose spacing left over after link removal.
+            # The (?<=\S) lookbehind ensures we never touch leading indentation,
+            # so code-fence indentation, YAML nesting, etc. are all safe.
+            body = re.sub(r"(?<=\S) {3,}(?=\S)", " ", body)
+            body = re.sub(r"\n\n\n+", "\n\n", body)
+
+            content = frontmatter_block + body
 
             # Only write if content changed
             if content != original_content:

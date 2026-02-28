@@ -249,3 +249,61 @@ class TestProcessorSanityCheck:
                 processor.process(input_dir, output_dir)
 
         assert "private.md" in str(exc_info.value)
+
+    def test_processor_nested_frontmatter_survives_stale_links_transformer(
+        self, tmp_path: Path
+    ):
+        """Regression: StaleLinksTransformer must not mangle YAML frontmatter.
+
+        A file whose frontmatter contains a URL nested four spaces inside a
+        list item (e.g. ``author[].url``) was previously corrupted by the
+        transformer's 'collapse 3+ spaces' pass.  The resulting invalid YAML
+        made FrontmatterFilter unable to read ``publish: true``, so the sanity
+        check raised FilterSanityError even though the file should pass.
+        """
+        import yaml
+        from publishmd.processor import Processor
+
+        input_dir = tmp_path / "input"
+        input_dir.mkdir()
+        _write(
+            input_dir / "article.md",
+            "---\n"
+            "author:\n"
+            "  - name: Test Author\n"
+            "    url: https://example.com\n"
+            "publish: true\n"
+            "---\n\n"
+            "# Article\n\n"
+            "Some text with a [stale link](missing.md) that will be removed.\n",
+        )
+
+        config_data = {
+            "filters": [
+                {
+                    "name": "fm",
+                    "type": "publishmd.filters.frontmatter_filter.FrontmatterFilter",
+                    "config": {"publish": True, "sanity_check": True},
+                }
+            ],
+            "transformers": [
+                {
+                    "name": "stale_links",
+                    "type": "publishmd.transformers.stale_links_transformer.StaleLinksTransformer",
+                    "config": {"remove_stale_links": True, "convert_to_text": False},
+                }
+            ],
+        }
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text(yaml.dump(config_data))
+
+        output_dir = tmp_path / "output"
+        processor = Processor(str(config_file))
+        # Must not raise FilterSanityError
+        processor.process(input_dir, output_dir)
+
+        out_file = output_dir / "article.md"
+        assert out_file.exists()
+        result = out_file.read_text()
+        # Indentation in frontmatter must be intact
+        assert "    url: https://example.com" in result
