@@ -1,4 +1,4 @@
-"""Base classes for emitters, transformers, and filters."""
+"""Base classes for transformers and filters."""
 
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -20,28 +20,6 @@ def read_text_safe(path: Path) -> str:
         return raw.decode("latin-1")
 
 
-class Emitter(ABC):
-    """Base class for all emitters."""
-
-    def __init__(self, config: Dict[str, Any]):
-        """Initialize the emitter with configuration."""
-        self.config = config
-
-    @abstractmethod
-    def emit(self, files_to_process: List[Path], output_dir: Path) -> List[Path]:
-        """
-        Emit files to output directory.
-
-        Args:
-            files_to_process: List of files to process and emit
-            output_dir: Target directory for emitted files
-
-        Returns:
-            List of paths to emitted files
-        """
-        pass
-
-
 class Transformer(ABC):
     """Base class for all transformers."""
 
@@ -50,13 +28,15 @@ class Transformer(ABC):
         self.config = config
 
     @abstractmethod
-    def transform(self, file_path: Path, emitted_files: List[Path]) -> None:
+    def transform(self, file_path: Path, copied_files: List[Path]) -> None:
         """
         Transform a file in place.
 
         Args:
             file_path: Path to the file to transform
-            emitted_files: List of all emitted files for reference
+            copied_files: Mutable list of all copied output files for reference.
+                          Transformers that rename files (e.g. change extension)
+                          should update this list in-place.
         """
         pass
 

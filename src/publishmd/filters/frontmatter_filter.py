@@ -21,9 +21,9 @@ class FrontmatterFilter(Filter):
         Returns:
             True if the file should be included, False otherwise
         """
-        # Only process markdown and QMD files with this filter
+        # Only this filter knows about markdown/QMD files; pass everything else through
         if file_path.suffix not in [".md", ".markdown", ".qmd"]:
-            return False
+            return True
 
         if not self.config:
             return True

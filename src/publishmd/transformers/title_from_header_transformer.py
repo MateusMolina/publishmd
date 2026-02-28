@@ -41,13 +41,13 @@ class TitleFromHeaderTransformer(Transformer):
         """Initialize the title from header transformer."""
         super().__init__(config)
 
-    def transform(self, file_path: Path, emitted_files: List[Path]) -> None:
+    def transform(self, file_path: Path, copied_files: List[Path]) -> None:
         """
         Transform the file by syncing frontmatter title with the first H1 header.
 
         Args:
             file_path: Path to the file to transform
-            emitted_files: List of all emitted files for reference
+            copied_files: List of all copied files for reference
         """
         if not file_path.exists():
             return

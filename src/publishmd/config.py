@@ -5,7 +5,7 @@ import yaml
 from pathlib import Path
 from typing import Any, Dict, List, Union
 
-from .base import Emitter, Transformer, Filter
+from .base import Transformer, Filter
 
 
 class ConfigLoader:
@@ -46,7 +46,7 @@ class ConfigLoader:
             raise ValueError("Configuration must be a dictionary")
 
         # At least one of these sections must be present
-        required_sections = ["emitters", "transformers", "filters"]
+        required_sections = ["transformers", "filters"]
         if not any(section in config for section in required_sections):
             raise ValueError(
                 f"Configuration must contain at least one of: {', '.join(required_sections)}"
@@ -57,7 +57,7 @@ class ConfigLoader:
             if dir_key in config and not isinstance(config[dir_key], str):
                 raise ValueError(f"'{dir_key}' must be a string path")
 
-        for section in ["emitters", "transformers", "filters"]:
+        for section in ["transformers", "filters"]:
             if section in config:
                 if not isinstance(config[section], list):
                     raise ValueError(f"'{section}' must be a list")
@@ -92,25 +92,6 @@ class PluginLoader:
         module_path, class_name = class_path.rsplit(".", 1)
         module = importlib.import_module(module_path)
         return getattr(module, class_name)
-
-    @staticmethod
-    def load_emitters(config: List[Dict[str, Any]]) -> List[Emitter]:
-        """
-        Load emitter instances from configuration.
-
-        Args:
-            config: List of emitter configurations
-
-        Returns:
-            List of instantiated emitters
-        """
-        emitters = []
-        for emitter_config in config:
-            plugin_class = PluginLoader.load_plugin_class(emitter_config["type"])
-            plugin_config = emitter_config.get("config", {})
-            emitter = plugin_class(plugin_config)
-            emitters.append(emitter)
-        return emitters
 
     @staticmethod
     def load_transformers(config: List[Dict[str, Any]]) -> List[Transformer]:

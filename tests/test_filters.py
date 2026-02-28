@@ -220,12 +220,11 @@ Some content"""
             frontmatter = filter_obj._extract_frontmatter(file_path)
             assert frontmatter is None
 
-    def test_should_exclude_non_markdown_files(self):
-        """Test that non-markdown files are excluded even with no filter config."""
+    def test_should_pass_through_non_markdown_files(self):
+        """Non-markdown files pass through FrontmatterFilter (it only screens markdown)."""
         filter_obj = FrontmatterFilter({})
 
         with TemporaryDirectory() as temp_dir:
-            # Test various non-markdown file types
             txt_file = Path(temp_dir) / "test.txt"
             py_file = Path(temp_dir) / "test.py"
             json_file = Path(temp_dir) / "test.json"
@@ -234,24 +233,23 @@ Some content"""
             py_file.write_text("print('hello')")
             json_file.write_text('{"key": "value"}')
 
-            # All should be excluded because they're not markdown files
-            assert filter_obj.should_include(txt_file) is False
-            assert filter_obj.should_include(py_file) is False
-            assert filter_obj.should_include(json_file) is False
+            # Non-markdown files pass through - FrontmatterFilter targets only .md/.qmd
+            assert filter_obj.should_include(txt_file) is True
+            assert filter_obj.should_include(py_file) is True
+            assert filter_obj.should_include(json_file) is True
 
-    def test_should_exclude_non_markdown_files_with_filter(self):
-        """Test that non-markdown files are excluded even when filter is configured."""
+    def test_should_pass_through_non_markdown_files_with_filter(self):
+        """Non-markdown files pass through even when a frontmatter filter is configured."""
         filter_config = {"publish": True}
         filter_obj = FrontmatterFilter(filter_config)
 
         with TemporaryDirectory() as temp_dir:
-            # Test various non-markdown file types
             txt_file = Path(temp_dir) / "test.txt"
             py_file = Path(temp_dir) / "test.py"
 
             txt_file.write_text("Some text content")
             py_file.write_text("print('hello')")
 
-            # All should be excluded because they're not markdown files
-            assert filter_obj.should_include(txt_file) is False
-            assert filter_obj.should_include(py_file) is False
+            # Non-markdown files pass through unconditionally
+            assert filter_obj.should_include(txt_file) is True
+            assert filter_obj.should_include(py_file) is True

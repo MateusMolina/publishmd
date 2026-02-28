@@ -11,11 +11,11 @@ _TEXT_EXTENSIONS = {".md", ".qmd", ".txt", ".html", ".htm"}
 
 
 class SpacesToDashesTransformer(Transformer):
-    """Transformer that renames emitted files with spaces in their names to use
+    """Transformer that renames copied files with spaces in their names to use
     dashes instead, and updates all markdown links across all files accordingly.
 
     This transformer is stateful: on its first call it pre-computes every needed
-    rename, applies them on disk, and mutates *emitted_files* in-place so that
+    rename, applies them on disk, and mutates *copied_files* in-place so that
     subsequent transformers see the updated paths.  Subsequent calls only update
     links in the supplied file.
     """
@@ -27,22 +27,22 @@ class SpacesToDashesTransformer(Transformer):
         self._rename_map: Dict[str, str] = {}
         self._initialized: bool = False
 
-    def transform(self, file_path: Path, emitted_files: List[Path]) -> None:
+    def transform(self, file_path: Path, copied_files: List[Path]) -> None:
         """
         Rename files with spaces and update links in *file_path*.
 
-        On the very first invocation the transformer scans *emitted_files* for
+        On the very first invocation the transformer scans *copied_files* for
         any paths whose filename contains spaces, renames those files on disk,
         and records the mapping.  Every invocation then rewrites links inside
         *file_path* to reference the new (dash-separated) filenames.
 
         Args:
             file_path: Path to the file currently being transformed.
-            emitted_files: Mutable list of all emitted output files; updated
+            copied_files: Mutable list of all emitted output files; updated
                            in-place when files are renamed.
         """
         if not self._initialized:
-            self._precompute_renames(emitted_files)
+            self._precompute_renames(copied_files)
             self._initialized = True
 
         if not file_path.exists():
@@ -58,13 +58,13 @@ class SpacesToDashesTransformer(Transformer):
     # Private helpers
     # ------------------------------------------------------------------
 
-    def _precompute_renames(self, emitted_files: List[Path]) -> None:
-        """Rename every file in *emitted_files* whose name contains spaces.
+    def _precompute_renames(self, copied_files: List[Path]) -> None:
+        """Rename every file in *copied_files* whose name contains spaces.
 
-        Updates *emitted_files* in-place so the processor loop (and later
+        Updates *copied_files* in-place so the processor loop (and later
         transformers) work with the corrected paths.
         """
-        for i, file_path in enumerate(emitted_files):
+        for i, file_path in enumerate(copied_files):
             if " " not in file_path.name:
                 continue
 
@@ -81,8 +81,8 @@ class SpacesToDashesTransformer(Transformer):
             if encoded_old != file_path.name:
                 self._rename_map[encoded_old] = new_name
 
-            # Propagate the rename back into the shared emitted_files list
-            emitted_files[i] = new_path
+            # Propagate the rename back into the shared copied_files list
+            copied_files[i] = new_path
 
     def _update_links(self, file_path: Path) -> None:
         """Rewrite markdown/HTML links in *file_path* that point to renamed files.

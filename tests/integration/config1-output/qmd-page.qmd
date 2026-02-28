@@ -13,5 +13,5 @@ The fifth page also contains a space, but the page should not be published, ther
 
 Testing md links with spaces:
 
-1. fourth page
+1. [fourth page](fourth-page.qmd)
 2. fifth page

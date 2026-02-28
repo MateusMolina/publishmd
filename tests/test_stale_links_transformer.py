@@ -50,10 +50,10 @@ This links to [other page](other.qmd).
             current_file.write_text(content)
             other_file.write_text("# Other Page")
 
-            emitted_files = [current_file, other_file]
+            copied_files = [current_file, other_file]
 
             transformer = StaleLinksTransformer({})
-            transformer.transform(current_file, emitted_files)
+            transformer.transform(current_file, copied_files)
 
             result = current_file.read_text()
             assert "[other page](other.qmd)" in result
@@ -69,10 +69,10 @@ This links to [external site](https://example.com).
             current_file = Path(temp_dir) / "current.qmd"
 
             current_file.write_text(content)
-            emitted_files = [current_file]
+            copied_files = [current_file]
 
             transformer = StaleLinksTransformer({})
-            transformer.transform(current_file, emitted_files)
+            transformer.transform(current_file, copied_files)
 
             result = current_file.read_text()
             assert "[external site](https://example.com)" in result
@@ -93,10 +93,10 @@ This links to .
             current_file = Path(temp_dir) / "current.qmd"
 
             current_file.write_text(content)
-            emitted_files = [current_file]
+            copied_files = [current_file]
 
             transformer = StaleLinksTransformer({"remove_stale_links": True})
-            transformer.transform(current_file, emitted_files)
+            transformer.transform(current_file, copied_files)
 
             result = current_file.read_text()
             assert result == expected
@@ -117,12 +117,12 @@ This links to nonexistent page.
             current_file = Path(temp_dir) / "current.qmd"
 
             current_file.write_text(content)
-            emitted_files = [current_file]
+            copied_files = [current_file]
 
             transformer = StaleLinksTransformer(
                 {"remove_stale_links": False, "convert_to_text": True}
             )
-            transformer.transform(current_file, emitted_files)
+            transformer.transform(current_file, copied_files)
 
             result = current_file.read_text()
             assert result == expected
@@ -138,17 +138,17 @@ This links to [nonexistent page](nonexistent.qmd).
             current_file = Path(temp_dir) / "current.qmd"
 
             current_file.write_text(content)
-            emitted_files = [current_file]
+            copied_files = [current_file]
 
             transformer = StaleLinksTransformer(
                 {"remove_stale_links": False, "convert_to_text": False}
             )
-            transformer.transform(current_file, emitted_files)
+            transformer.transform(current_file, copied_files)
 
             result = current_file.read_text()
             assert "[nonexistent page](nonexistent.qmd)" in result
 
-    def test_is_emitted_file(self):
+    def test_is_copied_file(self):
         """Test checking if a file is in the emitted files list."""
         transformer = StaleLinksTransformer({})
 
@@ -160,11 +160,11 @@ This links to [nonexistent page](nonexistent.qmd).
             file1.write_text("content")
             file2.write_text("content")
 
-            emitted_files = [file1, file2]
+            copied_files = [file1, file2]
 
-            assert transformer._is_emitted_file(file1, emitted_files) is True
-            assert transformer._is_emitted_file(file2, emitted_files) is True
-            assert transformer._is_emitted_file(file3, emitted_files) is False
+            assert transformer._is_copied_file(file1, copied_files) is True
+            assert transformer._is_copied_file(file2, copied_files) is True
+            assert transformer._is_copied_file(file3, copied_files) is False
 
     def test_resolve_link_path_relative(self):
         """Test resolving relative link paths."""
@@ -222,10 +222,10 @@ More content with ![another image](assets/photo.jpg).
             valid_file = temp_path / "valid.qmd"
             valid_file.write_text("# Valid content")
 
-            emitted_files = [valid_file]
+            copied_files = [valid_file]
 
             transformer = StaleLinksTransformer({"remove_stale_links": True})
-            transformer.transform(test_file, emitted_files)
+            transformer.transform(test_file, copied_files)
 
             result_content = test_file.read_text()
             assert result_content.strip() == expected_content.strip()
@@ -257,28 +257,28 @@ This is a  that should be removed.
             index_qmd.write_text("# Index content")
             another_qmd.write_text("# Another page content")
 
-            emitted_files = [index_qmd, another_qmd]
+            copied_files = [index_qmd, another_qmd]
 
             transformer = StaleLinksTransformer({"remove_stale_links": True})
 
             # Debug: Let's see what _resolve_link_path returns
             test_target = transformer._resolve_link_path(
-                "index.md", test_file, emitted_files
+                "index.md", test_file, copied_files
             )
             print(f"Resolved 'index.md': {test_target}")
 
-            # Debug: Let's see what _is_emitted_file returns
+            # Debug: Let's see what _is_copied_file returns
             if test_target:
-                is_emitted = transformer._is_emitted_file(test_target, emitted_files)
+                is_emitted = transformer._is_copied_file(test_target, copied_files)
                 print(f"Is emitted: {is_emitted}")
 
                 # Debug: Let's see what _get_updated_link_path returns
                 updated_path = transformer._get_updated_link_path(
-                    "index.md", test_target, emitted_files
+                    "index.md", test_target, copied_files
                 )
                 print(f"Updated path: {updated_path}")
 
-            transformer.transform(test_file, emitted_files)
+            transformer.transform(test_file, copied_files)
 
             result_content = test_file.read_text()
             print("Expected:")
@@ -310,10 +310,10 @@ This is a  that should be removed.
             target_qmd = temp_path / "fourth page.qmd"
             target_qmd.write_text("# Fourth page content")
 
-            emitted_files = [target_qmd]
+            copied_files = [target_qmd]
 
             transformer = StaleLinksTransformer({"remove_stale_links": True})
-            transformer.transform(test_file, emitted_files)
+            transformer.transform(test_file, copied_files)
 
             result_content = test_file.read_text()
             assert result_content.strip() == expected_content.strip()
@@ -341,10 +341,10 @@ This is a  that should be removed.
             target_qmd = temp_path / "fourth page.qmd"
             target_qmd.write_text("# Fourth page content")
 
-            emitted_files = [target_qmd]
+            copied_files = [target_qmd]
 
             transformer = StaleLinksTransformer({"remove_stale_links": True})
-            transformer.transform(test_file, emitted_files)
+            transformer.transform(test_file, copied_files)
 
             result_content = test_file.read_text()
             assert result_content.strip() == expected_content.strip()

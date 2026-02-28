@@ -41,7 +41,7 @@ class RenameFrontmatterFieldTransformer(Transformer):
         self.to_field: str = config["to_field"]
         self.overwrite: bool = config.get("overwrite", False)
 
-    def transform(self, file_path: Path, emitted_files: List[Path]) -> None:
+    def transform(self, file_path: Path, copied_files: List[Path]) -> None:
         """Rename *from_field* to *to_field* in the frontmatter of *file_path*."""
         if not file_path.exists():
             return

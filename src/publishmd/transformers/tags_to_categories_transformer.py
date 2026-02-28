@@ -16,13 +16,13 @@ class TagsToCategoriesTransformer(Transformer):
         super().__init__(config)
         # No specific config needed for this transformer
 
-    def transform(self, file_path: Path, emitted_files: List[Path]) -> None:
+    def transform(self, file_path: Path, copied_files: List[Path]) -> None:
         """
         Transform frontmatter by converting 'tags' to 'categories'.
 
         Args:
             file_path: Path to the file to transform
-            emitted_files: List of all emitted files for reference
+            copied_files: List of all copied files for reference
         """
         if not file_path.exists():
             return

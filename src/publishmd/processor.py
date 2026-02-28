@@ -1,14 +1,25 @@
-"""Core processor that orchestrates emitters, transformers, and filters."""
+"""Core processor that orchestrates transformers and filters."""
 
+import shutil
 from pathlib import Path
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List
 
-from .base import Emitter, Transformer, Filter
+from .base import Transformer, Filter
 from .config import ConfigLoader, PluginLoader
 
 
 class Processor:
-    """Main processor that orchestrates the conversion process."""
+    """Main processor that orchestrates the conversion process.
+
+    Pipeline:
+      1. Collect every file under ``input_dir`` recursively.
+      2. Apply filters to reduce the list (files that fail any filter are dropped).
+      3. Copy every remaining file to ``output_dir``, preserving directory structure.
+      4. Apply transformers in order to every copied file.
+         Transformers that rename files (e.g. ``ChangeExtensionTransformer``)
+         should update the ``copied_files`` list in-place so that subsequent
+         transformers see the updated paths.
+    """
 
     def __init__(self, config_path: Path, cli_overrides: Dict[str, Any] = None):
         """
@@ -39,7 +50,6 @@ class Processor:
         if cli_overrides:
             self._apply_cli_overrides(cli_overrides)
 
-        self.emitters = self._load_emitters()
         self.transformers = self._load_transformers()
         self.filters = self._load_filters()
 
@@ -49,11 +59,6 @@ class Processor:
             self.input_dir = Path(overrides["input_dir"]).resolve()
         if overrides.get("output_dir") is not None:
             self.output_dir = Path(overrides["output_dir"]).resolve()
-
-    def _load_emitters(self) -> List[Emitter]:
-        """Load emitter instances from configuration."""
-        emitter_configs = self.config.get("emitters", [])
-        return PluginLoader.load_emitters(emitter_configs)
 
     def _load_transformers(self) -> List[Transformer]:
         """Load transformer instances from configuration."""
@@ -67,15 +72,15 @@ class Processor:
 
     def process(self, input_dir: Path = None, output_dir: Path = None) -> None:
         """
-        Process markdown files from input directory to output directory.
+        Process files from input directory to output directory.
 
         Args:
-            input_dir: Source directory containing markdown files.
-                       Falls back to ``input_dir`` defined in the config file.
-            output_dir: Target directory for processed files.
-                        Falls back to ``output_dir`` defined in the config file.
+            input_dir: Source directory.  Falls back to ``input_dir`` in config.
+            output_dir: Target directory.  Falls back to ``output_dir`` in config.
         """
-        input_dir = Path(input_dir) if input_dir is not None else self.input_dir
+        input_dir = (
+            Path(input_dir).resolve() if input_dir is not None else self.input_dir
+        )
         output_dir = Path(output_dir) if output_dir is not None else self.output_dir
 
         if input_dir is None:
@@ -90,56 +95,58 @@ class Processor:
         if not input_dir.exists():
             raise FileNotFoundError(f"Input directory not found: {input_dir}")
 
-        # Create output directory if it doesn't exist
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        # Step 0: Apply global filter to determine which files should be processed
+        # Step 1: Collect all files, then apply filters
         filtered_files = self._filter_files(input_dir)
 
-        # Step 1: Run all emitters with the filtered file list
-        all_emitted_files = []
-        for emitter in self.emitters:
-            emitted_files = emitter.emit(filtered_files, output_dir)
-            all_emitted_files.extend(emitted_files)
+        # Step 2: Copy every filtered file to output_dir preserving structure
+        copied_files = self._copy_files(filtered_files, input_dir, output_dir)
 
-        # Step 2: Run all transformers on emitted files
+        # Step 3: Run all transformers on the copied files
         for transformer in self.transformers:
-            for file_path in all_emitted_files:
+            for file_path in list(copied_files):
                 if file_path.exists():
-                    transformer.transform(file_path, all_emitted_files)
+                    transformer.transform(file_path, copied_files)
 
         print(
-            f"Processing complete. Filtered {len(filtered_files)} files, "
-            f"emitted {len(all_emitted_files)} files to {output_dir}"
+            f"Processing complete. Copied {len(copied_files)} files "
+            f"({len(filtered_files)} passed filters) to {output_dir}"
         )
 
+    # ------------------------------------------------------------------
+    # Private helpers
+    # ------------------------------------------------------------------
+
     def _filter_files(self, input_dir: Path) -> List[Path]:
-        """
-        Filter all files based on all configured filters.
+        """Return every file under *input_dir* that passes all configured filters."""
+        filtered: List[Path] = []
 
-        Args:
-            input_dir: Input directory to scan for files
+        for file_path in sorted(input_dir.rglob("*")):
+            if not file_path.is_file():
+                continue
 
-        Returns:
-            List of files that pass all filters
-        """
-        filtered_files = []
+            if all(f.should_include(file_path) for f in self.filters):
+                filtered.append(file_path)
 
-        for file_path in input_dir.rglob("*"):
-            if file_path.is_file():
-                # If no filters are configured, include all files
-                if not self.filters:
-                    filtered_files.append(file_path)
-                    continue
+        return filtered
 
-                # File must pass all filters to be included
-                include_file = True
-                for filter_instance in self.filters:
-                    if not filter_instance.should_include(file_path):
-                        include_file = False
-                        break
+    def _copy_files(
+        self, files: List[Path], input_dir: Path, output_dir: Path
+    ) -> List[Path]:
+        """Copy *files* to *output_dir*, preserving directory structure relative
+        to *input_dir*.  Returns the list of output (copied) paths."""
+        copied: List[Path] = []
 
-                if include_file:
-                    filtered_files.append(file_path)
+        for src in files:
+            try:
+                relative = src.resolve().relative_to(input_dir)
+            except ValueError:
+                relative = Path(src.name)
 
-        return filtered_files
+            dst = Path(output_dir) / relative
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dst)
+            copied.append(dst)
+
+        return copied
