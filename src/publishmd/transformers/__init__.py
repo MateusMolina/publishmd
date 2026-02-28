@@ -1,6 +1,7 @@
 """Transformers package."""
 
 from .change_extension_transformer import ChangeExtensionTransformer
+from .image_to_webp_transformer import ImageToWebpTransformer
 from .stale_links_transformer import StaleLinksTransformer
 from .title_from_header_transformer import TitleFromHeaderTransformer
 from .wikilink_transformer import WikilinkTransformer
@@ -10,6 +11,7 @@ from .rename_frontmatter_field_transformer import RenameFrontmatterFieldTransfor
 
 __all__ = [
     "ChangeExtensionTransformer",
+    "ImageToWebpTransformer",
     "StaleLinksTransformer",
     "TitleFromHeaderTransformer",
     "WikilinkTransformer",

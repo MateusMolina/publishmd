@@ -19,6 +19,9 @@ dev = [
     "pytest",
     "black",
 ]
+webp = [
+    "Pillow>=10.0",
+]
 
 [project.scripts]
 publishmd = "publishmd.cli:main"
