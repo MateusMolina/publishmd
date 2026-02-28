@@ -26,15 +26,20 @@ def _make_dumper() -> type:
 
 
 class TitleFromHeaderTransformer(Transformer):
-    """Transformer that manages the frontmatter title and the first H1 header.
+    """Transformer that syncs the frontmatter ``title`` field with the first H1 header.
 
-    If a 'title' field already exists in frontmatter, the first H1 header is
-    removed (the frontmatter title takes precedence).
+    Behaviour:
 
-    If no 'title' field exists, the content of the first H1 header is used to
-    populate a new 'title' frontmatter field, and the H1 header is removed.
+    * **Front matter has ``title``** — the first ``# …`` header is removed so
+      the title is not duplicated in the rendered output.
+    * **Front matter has no ``title``** — the text of the first ``# …`` header
+      is promoted to ``title:`` in the frontmatter and the header is removed.
+    * **No H1 found** — the file is left unchanged.
 
-    In both cases, if no H1 header is found, the file is left unchanged.
+    This transformer takes no configuration keys::
+
+        - name: title_from_header
+          type: publishmd.transformers.title_from_header_transformer.TitleFromHeaderTransformer
     """
 
     def __init__(self, config: Dict[str, Any]):

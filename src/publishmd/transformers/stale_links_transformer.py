@@ -9,7 +9,28 @@ from ..base import Transformer, read_text_safe
 
 
 class StaleLinksTransformer(Transformer):
-    """Transformer that removes stale markdown links to non-copied files."""
+    """Transformer that removes or converts markdown links to files not in the output.
+
+    After filtering and copying, some internal links may point to files that
+    were intentionally excluded.  This transformer detects those *stale* links
+    and either removes them entirely or converts them to plain text.
+
+    Config keys:
+        remove_stale_links (bool): When ``True`` (default), stale links are
+                                    deleted from the document.
+        convert_to_text    (bool): When ``True``, the link is replaced with its
+                                    visible text instead of being deleted.
+                                    Takes precedence over ``remove_stale_links``
+                                    when both are ``True``.
+
+    Example YAML::
+
+        - name: stale_links
+          type: publishmd.transformers.stale_links_transformer.StaleLinksTransformer
+          config:
+            remove_stale_links: true
+            convert_to_text: true
+    """
 
     def __init__(self, config: Dict[str, Any]):
         """Initialize the stale links transformer."""

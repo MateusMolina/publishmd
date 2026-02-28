@@ -9,7 +9,29 @@ from ..base import Transformer, read_text_safe
 
 
 class WikilinkTransformer(Transformer):
-    """Transformer that converts wikilinks to standard markdown links."""
+    """Transformer that converts Obsidian-style wikilinks to standard markdown links.
+
+    Handles both plain wikilinks and aliased wikilinks::
+
+        [[Page Name]]           →  [Page Name](page-name.qmd)
+        [[Page Name|My alias]]  →  [My alias](page-name.qmd)
+        ![[image.png]]          →  ![image.png](image.png)
+
+    Config keys:
+        preserve_aliases (bool): When ``True`` (default), the alias part of
+                                  ``[[target|alias]]`` is used as link text.
+                                  When ``False``, the target name is always used.
+        link_extension   (str):  Extension appended to internal page links.
+                                  Defaults to ``".qmd"``.
+
+    Example YAML::
+
+        - name: wikilinks
+          type: publishmd.transformers.wikilink_transformer.WikilinkTransformer
+          config:
+            preserve_aliases: true
+            link_extension: ".qmd"
+    """
 
     def __init__(self, config: Dict[str, Any]):
         """Initialize the wikilink transformer."""
