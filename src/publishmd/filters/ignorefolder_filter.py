@@ -33,32 +33,21 @@ class IgnoreFolderFilter(Filter):
         # Normalise each entry as a pure-path so comparisons work cross-platform
         self.ignored_folders: List[Path] = [Path(f) for f in raw]
 
-    def should_include(self, file_path: Path) -> bool:
-        """
-        Return False if *file_path* lives inside any of the ignored folders.
+    def filter(self, files: List[Path]) -> List[Path]:
+        """Return *files* with any path inside an ignored folder removed."""
+        if not self.ignored_folders:
+            return list(files)
+        return [f for f in files if not self._is_inside_ignored(f)]
 
-        Matching is done against each part of the resolved path, so both
-        simple folder names (e.g. ``drafts``) and relative sub-paths
-        (e.g. ``content/drafts``) are supported.
-
-        Args:
-            file_path: Path to the file to evaluate.
-
-        Returns:
-            True if the file should be included, False if it should be ignored.
-        """
+    def _is_inside_ignored(self, file_path: Path) -> bool:
+        """Return True when *file_path* lives inside any of the ignored folders."""
         resolved = file_path.resolve()
-
         for ignored in self.ignored_folders:
-            ignored_parts = ignored.parts  # e.g. ('content', 'drafts')
-
-            # Walk up through the parents of *resolved* and look for a match
+            ignored_parts = ignored.parts
             for parent in [resolved, *resolved.parents]:
-                # Try matching the tail of *parent* against *ignored*
                 candidate_parts = parent.parts
                 if len(candidate_parts) >= len(ignored_parts):
                     tail = candidate_parts[-len(ignored_parts):]
                     if tail == ignored_parts:
-                        return False
-
-        return True
+                        return True
+        return False

@@ -119,17 +119,17 @@ class Processor:
     # ------------------------------------------------------------------
 
     def _filter_files(self, input_dir: Path) -> List[Path]:
-        """Return every file under *input_dir* that passes all configured filters."""
-        filtered: List[Path] = []
+        """Return every file under *input_dir* that passes all configured filters.
 
-        for file_path in sorted(input_dir.rglob("*")):
-            if not file_path.is_file():
-                continue
-
-            if all(f.should_include(file_path) for f in self.filters):
-                filtered.append(file_path)
-
-        return filtered
+        Filters are applied sequentially; each filter receives the output of the
+        previous one so an early filter can shrink the list seen by later filters.
+        """
+        files: List[Path] = sorted(
+            f for f in input_dir.rglob("*") if f.is_file()
+        )
+        for f in self.filters:
+            files = f.filter(files)
+        return files
 
     def _copy_files(
         self, files: List[Path], input_dir: Path, output_dir: Path

@@ -42,21 +42,29 @@ class Transformer(ABC):
 
 
 class Filter(ABC):
-    """Base class for all filters."""
+    """Base class for all filters.
+
+    The single abstract method is :meth:`filter`, which receives the **full
+    list** of candidate files and returns the subset that should be kept.
+    This bulk API lets filters that need cross-file context (e.g.
+    ``ReferencedAssetsFilter``) work correctly while still allowing simple
+    per-file filters to implement a lightweight ``should_include`` helper
+    and delegate to it from ``filter``.
+    """
 
     def __init__(self, config: Dict[str, Any]):
         """Initialize the filter with configuration."""
         self.config = config
 
     @abstractmethod
-    def should_include(self, file_path: Path) -> bool:
-        """
-        Check if a file should be included based on filter criteria.
+    def filter(self, files: List[Path]) -> List[Path]:
+        """Return the subset of *files* that should be kept.
 
         Args:
-            file_path: Path to the file to check
+            files: All candidate files (already collected from the input
+                   directory, or the result of a previous filter stage).
 
         Returns:
-            True if the file should be included, False otherwise
+            The files that pass this filter.
         """
         pass

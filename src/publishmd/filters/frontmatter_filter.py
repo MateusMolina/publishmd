@@ -3,43 +3,42 @@
 import re
 import yaml
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from ..base import Filter, read_text_safe
 
 
 class FrontmatterFilter(Filter):
-    """Filter files based on YAML frontmatter criteria."""
+    """Filter files based on YAML frontmatter criteria.
 
-    def should_include(self, file_path: Path) -> bool:
+    Markdown/QMD files are kept only when their frontmatter satisfies every
+    key-value pair in the config.  All other file types pass through
+    unconditionally — this filter only concerns itself with text files that
+    may carry YAML frontmatter.
+    """
+
+    def filter(self, files: List[Path]) -> List[Path]:
+        """Return the subset of *files* that passes the frontmatter criteria.
+
+        Non-markdown files always pass through.  Markdown files are kept only
+        when their frontmatter satisfies every configured key-value pair.
         """
-        Check if a file should be included based on frontmatter filters.
-
-        Args:
-            file_path: Path to the file to check
-
-        Returns:
-            True if the file should be included, False otherwise
-        """
-        # Only this filter knows about markdown/QMD files; pass everything else through
-        if file_path.suffix not in [".md", ".markdown", ".qmd"]:
-            return True
-
-        if not self.config:
-            return True
-
-        frontmatter = self._extract_frontmatter(file_path)
-        if not frontmatter:
-            return False
-
-        # Check all filter conditions
-        for key, expected_value in self.config.items():
-            if key not in frontmatter:
-                return False
-            if frontmatter[key] != expected_value:
-                return False
-
-        return True
+        result: List[Path] = []
+        for f in files:
+            # Non-markdown passes through unconditionally
+            if f.suffix not in [".md", ".markdown", ".qmd"]:
+                result.append(f)
+                continue
+            # No criteria configured → keep all markdown too
+            if not self.config:
+                result.append(f)
+                continue
+            frontmatter = self._extract_frontmatter(f)
+            if not frontmatter:
+                continue
+            if all(frontmatter.get(k) == v for k, v in self.config.items()):
+                result.append(f)
+        return result
 
     def _extract_frontmatter(self, file_path: Path) -> Optional[Dict[str, Any]]:
         """

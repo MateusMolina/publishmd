@@ -15,8 +15,8 @@ class MockTransformer(Transformer):
 
 
 class MockFilter(Filter):
-    def should_include(self, file_path):
-        return True
+    def filter(self, files):
+        return files
 
 
 class TestConfigLoader:

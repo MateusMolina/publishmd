@@ -12,6 +12,11 @@ filters:
     config:
       publish: true
 
+  # Referenced Assets Filter - drops asset files not referenced by any kept text file
+  - name: referenced_assets_filter
+    type: publishmd.filters.referenced_assets_filter.ReferencedAssetsFilter
+    config: {}
+
   # Ignore Folder Filter - excludes files inside the listed folders
   # - name: ignorefolder_filter
   #   type: publishmd.filters.ignorefolder_filter.IgnoreFolderFilter
