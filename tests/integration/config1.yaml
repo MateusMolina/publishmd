@@ -11,6 +11,7 @@ filters:
     type: publishmd.filters.frontmatter_filter.FrontmatterFilter
     config:
       publish: true
+      sanity_check: true
 
   # Referenced Assets Filter - drops asset files not referenced by any kept text file
   - name: referenced_assets_filter

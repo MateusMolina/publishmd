@@ -109,6 +109,10 @@ class Processor:
                 if file_path.exists():
                     transformer.transform(file_path, copied_files)
 
+        # Step 4: Run sanity checks (only for filters that have it enabled)
+        for f in self.filters:
+            f.sanity_check(copied_files)
+
         print(
             f"Processing complete. Copied {len(copied_files)} files "
             f"({len(filtered_files)} passed filters) to {output_dir}"

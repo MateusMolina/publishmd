@@ -5,6 +5,16 @@ from pathlib import Path
 from typing import Any, Dict, List, Set
 
 
+class FilterSanityError(RuntimeError):
+    """Raised when a filter's post-run sanity check detects a violation.
+
+    A sanity check re-applies the filter to the actual output files after the
+    full pipeline has finished.  Any file that would have been dropped is
+    reported as a violation, indicating that the pipeline incorrectly let a
+    file through (e.g. a private document that should have been excluded by the
+    frontmatter filter).
+    """
+
 def read_text_safe(path: Path) -> str:
     """Read a file as text, falling back to latin-1 if it is not valid UTF-8.
 
@@ -54,7 +64,9 @@ class Filter(ABC):
 
     def __init__(self, config: Dict[str, Any]):
         """Initialize the filter with configuration."""
-        self.config = config
+        self._sanity_check_enabled: bool = bool(config.get("sanity_check", False))
+        # Strip the meta-key so subclasses only see their own filter criteria.
+        self.config = {k: v for k, v in config.items() if k != "sanity_check"}
 
     @abstractmethod
     def filter(self, files: List[Path]) -> List[Path]:
@@ -68,3 +80,33 @@ class Filter(ABC):
             The files that pass this filter.
         """
         pass
+
+    def sanity_check(self, output_files: List[Path]) -> None:
+        """Verify that every file in *output_files* would still pass this filter.
+
+        Re-applies :meth:`filter` to the actual output files after the full
+        pipeline has finished.  Any file that would be dropped is reported as
+        a violation and :class:`FilterSanityError` is raised.
+
+        The check is only performed when ``sanity_check: true`` is set in the
+        filter's config block.  Subclasses may override this method for more
+        specialised checks.
+
+        Args:
+            output_files: Final list of output files (after all transformers).
+
+        Raises:
+            FilterSanityError: If any output file would be rejected by this filter.
+        """
+        if not self._sanity_check_enabled:
+            return
+
+        kept = set(self.filter(output_files))
+        violations = [f for f in output_files if f not in kept]
+        if violations:
+            names = ", ".join(str(v) for v in violations)
+            raise FilterSanityError(
+                f"{self.__class__.__name__} sanity check failed — "
+                f"{len(violations)} file(s) in the output should have been excluded:\n"
+                f"  {names}"
+            )
