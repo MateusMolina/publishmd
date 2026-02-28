@@ -238,3 +238,126 @@ class TestIntegrationScenarios:
             assert output_dir.exists()
             qmd_files = list(output_dir.glob("**/*.qmd"))
             assert len(qmd_files) == 0
+
+
+@pytest.mark.integration
+class TestBinaryAssetPreservation:
+    """Ensure binary asset files (JPEG, PNG, …) are never corrupted by the pipeline.
+
+    This is a regression test for a bug where transformers that call
+    read_text_safe on every emitted file would corrupt binary assets by
+    re-encoding latin-1 decoded bytes as UTF-8 (expanding each byte > 127
+    from 1 to 2 bytes).  The fix lives in read_text_safe itself: it now
+    raises IOError for files that contain null bytes (the standard binary
+    file heuristic), which all transformers already handle by catching IOError.
+    """
+
+    # Minimal valid JFIF/JPEG bytes.  The JFIF header naturally contains
+    # several null bytes (e.g. 0x00 in the app0 length field), so this
+    # payload is correctly detected as binary by read_text_safe.
+    MINIMAL_JPEG = (
+        b"\xff\xd8\xff\xe0"  # SOI + APP0 marker
+        b"\x00\x10"          # APP0 length (contains null byte)
+        b"JFIF\x00"          # identifier + null terminator
+        b"\x01\x01"          # version
+        b"\x00"              # aspect ratio units
+        b"\x00\x01\x00\x01"  # X/Y density
+        b"\x00\x00"          # thumbnail dimensions
+        b"\xff\xd9"          # EOI
+    )
+
+    def _make_pipeline_config(self, config_path: Path) -> None:
+        """Write a minimal publishmd config that exercises all transformers."""
+        config_path.write_text(
+            "emitters:\n"
+            "  - name: md_emitter\n"
+            "    type: publishmd.emitters.md_emitter.MdEmitter\n"
+            "    config:\n"
+            "      output_extension: \".qmd\"\n"
+            "  - name: assets_emitter\n"
+            "    type: publishmd.emitters.assets_emitter.AssetsEmitter\n"
+            "transformers:\n"
+            "  - name: wikilink_transformer\n"
+            "    type: publishmd.transformers.wikilink_transformer.WikilinkTransformer\n"
+            "  - name: spaces_to_dashes_transformer\n"
+            "    type: publishmd.transformers.spaces_to_dashes_transformer.SpacesToDashesTransformer\n"
+            "  - name: stale_links_transformer\n"
+            "    type: publishmd.transformers.stale_links_transformer.StaleLinksTransformer\n"
+            "    config:\n"
+            "      remove_stale_links: true\n"
+            "      convert_to_text: true\n"
+            "  - name: tags_to_categories_transformer\n"
+            "    type: publishmd.transformers.tags_to_categories_transformer.TagsToCategoriesTransformer\n"
+            "  - name: title_from_header_transformer\n"
+            "    type: publishmd.transformers.title_from_header_transformer.TitleFromHeaderTransformer\n",
+            encoding="utf-8",
+        )
+
+    def test_jpeg_asset_is_not_corrupted_by_pipeline(self):
+        """A JPEG referenced in a markdown file must arrive in dist byte-identical."""
+        with TemporaryDirectory() as temp_dir:
+            base = Path(temp_dir)
+            input_dir = base / "input"
+            output_dir = base / "output"
+            input_dir.mkdir()
+
+            # Place a real binary JPEG in the input assets folder
+            assets_dir = input_dir / "assets"
+            assets_dir.mkdir()
+            jpeg_path = assets_dir / "photo.jpg"
+            jpeg_path.write_bytes(self.MINIMAL_JPEG)
+
+            # A markdown file that references the JPEG
+            md_file = input_dir / "note.md"
+            md_file.write_text(
+                "# Note\n\n![Photo](./assets/photo.jpg)\n",
+                encoding="utf-8",
+            )
+
+            # Write config next to input dir
+            config_path = base / "config.yaml"
+            self._make_pipeline_config(config_path)
+
+            processor = Processor(str(config_path))
+            processor.process(input_dir, output_dir)
+
+            # The JPEG must exist in output and be byte-identical to the source
+            out_jpeg = output_dir / "assets" / "photo.jpg"
+            assert out_jpeg.exists(), "JPEG asset was not emitted to output directory"
+            assert out_jpeg.read_bytes() == self.MINIMAL_JPEG, (
+                "JPEG asset was corrupted by the pipeline. "
+                f"Expected {len(self.MINIMAL_JPEG)} bytes, "
+                f"got {len(out_jpeg.read_bytes())} bytes."
+            )
+
+    def test_jpeg_with_spaces_in_name_is_not_corrupted(self):
+        """A JPEG whose name contains spaces (triggering SpacesToDashes) must not be corrupted."""
+        with TemporaryDirectory() as temp_dir:
+            base = Path(temp_dir)
+            input_dir = base / "input"
+            output_dir = base / "output"
+            input_dir.mkdir()
+
+            assets_dir = input_dir / "assets"
+            assets_dir.mkdir()
+            jpeg_path = assets_dir / "my photo.jpg"
+            jpeg_path.write_bytes(self.MINIMAL_JPEG)
+
+            md_file = input_dir / "note.md"
+            md_file.write_text(
+                "# Note\n\n![Photo](./assets/my%20photo.jpg)\n",
+                encoding="utf-8",
+            )
+
+            config_path = base / "config.yaml"
+            self._make_pipeline_config(config_path)
+
+            processor = Processor(str(config_path))
+            processor.process(input_dir, output_dir)
+
+            # SpacesToDashesTransformer renames the file to my-photo.jpg
+            out_jpeg = output_dir / "assets" / "my-photo.jpg"
+            assert out_jpeg.exists(), "Renamed JPEG asset was not emitted to output directory"
+            assert out_jpeg.read_bytes() == self.MINIMAL_JPEG, (
+                "JPEG asset was corrupted after spaces-to-dashes rename."
+            )

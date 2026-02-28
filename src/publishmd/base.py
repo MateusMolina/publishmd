@@ -6,11 +6,18 @@ from typing import Any, Dict, List, Set
 
 
 def read_text_safe(path: Path) -> str:
-    """Read a file as text, falling back to latin-1 if it is not valid UTF-8."""
+    """Read a file as text, falling back to latin-1 if it is not valid UTF-8.
+
+    Raises IOError for binary files (detected by the presence of null bytes),
+    so callers that wrap this in ``except IOError`` will safely skip them.
+    """
+    raw = path.read_bytes()
+    if b"\x00" in raw:
+        raise IOError(f"Binary file skipped: {path}")
     try:
-        return path.read_text(encoding="utf-8")
+        return raw.decode("utf-8")
     except UnicodeDecodeError:
-        return path.read_text(encoding="latin-1")
+        return raw.decode("latin-1")
 
 
 class Emitter(ABC):

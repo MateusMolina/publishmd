@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "publishmd"
-version = "0.2.0"
+version = "0.2.1"
 description = "Prepare markdown content for publication with configurable processing pipeline"
 authors = [{name = "Mateus Molina"}]
 readme = "README.md"
