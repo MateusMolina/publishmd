@@ -1,6 +1,6 @@
 site_name: publishmd
 site_description: Prepare markdown content for publication with a configurable processing pipeline.
-site_url: https://mateusmolina.github.io/publishmd
+site_url: https://pub.mmolina.me/publishmd/
 repo_url: https://github.com/mateusmolina/publishmd
 repo_name: mateusmolina/publishmd
 
