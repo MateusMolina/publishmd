@@ -104,3 +104,74 @@ class TestFilter:
         files = [posts / "a.md", posts / "b.md"]
         f = _make_filter(["posts"])
         assert f.filter(files) == files
+
+
+# ---------------------------------------------------------------------------
+# include_root option
+# ---------------------------------------------------------------------------
+
+def _make_filter_with_root(included_folders: list) -> FolderFilter:
+    return FolderFilter({"included_folders": included_folders, "include_root": True})
+
+
+class TestIncludeRoot:
+    def test_root_file_kept_with_include_root(self, tmp_path: Path):
+        posts = tmp_path / "posts"
+        posts.mkdir()
+        root_file = tmp_path / "index.md"
+        sub_file = posts / "post.md"
+        f = _make_filter_with_root(["posts"])
+        result = f.filter([root_file, sub_file])
+        assert root_file in result
+        assert sub_file in result
+
+    def test_root_file_dropped_without_include_root(self, tmp_path: Path):
+        posts = tmp_path / "posts"
+        posts.mkdir()
+        root_file = tmp_path / "index.md"
+        sub_file = posts / "post.md"
+        f = _make_filter(["posts"])
+        result = f.filter([root_file, sub_file])
+        assert root_file not in result
+        assert sub_file in result
+
+    def test_include_root_only_no_subfolders(self, tmp_path: Path):
+        # include_root=True, no included_folders → only root files kept
+        drafts = tmp_path / "drafts"
+        drafts.mkdir()
+        root_file = tmp_path / "readme.md"
+        sub_file = drafts / "draft.md"
+        f = FolderFilter({"include_root": True, "included_folders": []})
+        result = f.filter([root_file, sub_file])
+        assert root_file in result
+        assert sub_file not in result
+
+    def test_include_root_with_multiple_subfolders(self, tmp_path: Path):
+        posts = tmp_path / "posts"
+        pages = tmp_path / "pages"
+        other = tmp_path / "other"
+        for d in (posts, pages, other):
+            d.mkdir()
+        root_file = tmp_path / "index.md"
+        f = _make_filter_with_root(["posts", "pages"])
+        result = f.filter([root_file, posts / "a.md", pages / "b.md", other / "c.md"])
+        assert root_file in result
+        assert (posts / "a.md") in result
+        assert (pages / "b.md") in result
+        assert (other / "c.md") not in result
+
+    def test_nested_file_not_considered_root(self, tmp_path: Path):
+        # A file at depth 2 should NOT be treated as a root file
+        posts = tmp_path / "posts"
+        deep = posts / "deep"
+        deep.mkdir(parents=True)
+        root_file = tmp_path / "index.md"
+        deep_file = deep / "article.md"
+        f = FolderFilter({"include_root": True, "included_folders": []})
+        result = f.filter([root_file, deep_file])
+        assert root_file in result
+        assert deep_file not in result
+
+    def test_empty_file_list(self):
+        f = _make_filter_with_root(["posts"])
+        assert f.filter([]) == []
