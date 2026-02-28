@@ -348,3 +348,59 @@ This is a  that should be removed.
 
             result_content = test_file.read_text()
             assert result_content.strip() == expected_content.strip()
+
+    def test_transform_preserves_nested_frontmatter_indentation(self):
+        """Whitespace cleanup must not collapse indentation inside YAML frontmatter
+        or inside code fences.
+
+        A field like ``url:`` nested four spaces deep under a YAML list item
+        must remain correctly indented after transformation.  Similarly,
+        indented code inside a fenced block must not be corrupted.
+        Previously the '3+ spaces → 1 space' cleanup was applied to the whole
+        file without restriction, turning ``    url:`` into `` url:`` and
+        collapsing code indentation.
+        """
+        content = """\
+---
+created: 2026-02-28
+author:
+  - name: Test Author
+    url: https://example.com
+publish: true
+---
+
+# My Document
+
+Some text with a [stale link](missing.qmd) that gets removed.
+
+```python
+def foo():
+    return "bar"    # 4-space indent inside code fence
+```
+"""
+        with TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            test_file = temp_path / "doc.qmd"
+            test_file.write_text(content)
+
+            transformer = StaleLinksTransformer(
+                {"remove_stale_links": True, "convert_to_text": False}
+            )
+            transformer.transform(test_file, [test_file])
+
+            result = test_file.read_text()
+
+            # YAML frontmatter indentation must be intact
+            assert "    url: https://example.com" in result
+
+            # Code fence indentation must be intact
+            assert "    return" in result
+
+            # Frontmatter must still be parseable as valid YAML
+            import re, yaml
+
+            fm_match = re.match(r"^---\n(.*?)\n---\n", result, re.DOTALL)
+            assert fm_match is not None, "Frontmatter block not found"
+            parsed = yaml.safe_load(fm_match.group(1))
+            assert parsed["publish"] is True
+            assert parsed["author"][0]["url"] == "https://example.com"
