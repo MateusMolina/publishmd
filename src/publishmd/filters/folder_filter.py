@@ -72,7 +72,9 @@ class FolderFilter(Filter):
 
         result: List[Path] = []
         for f in files:
-            if self._include_root and root is not None and f.resolve().parent == root:
+            # Use lexical absolute paths (no symlink resolution) so files under
+            # e.g. .venv/bin/python -> /opt/... do not collapse inferred root to '/'.
+            if self._include_root and root is not None and f.absolute().parent == root:
                 result.append(f)
             elif self._is_inside_included(f):
                 result.append(f)
@@ -87,16 +89,16 @@ class FolderFilter(Filter):
         """Return the deepest directory that is an ancestor of every path."""
         if not files:
             return None
-        resolved = [p.resolve() for p in files]
-        common = resolved[0].parent
-        for p in resolved[1:]:
+        abs_paths = [p.absolute() for p in files]
+        common = abs_paths[0].parent
+        for p in abs_paths[1:]:
             while common not in p.parents and common != p.parent:
                 common = common.parent
         return common
 
     def _is_inside_included(self, file_path: Path) -> bool:
         """Return True when *file_path* lives inside any of the included folders."""
-        resolved = file_path.resolve()
+        resolved = file_path.absolute()
         for included in self.included_folders:
             included_parts = included.parts
             for parent in [resolved, *resolved.parents]:

@@ -1,5 +1,6 @@
 """Tests for FolderFilter."""
 
+import os
 from pathlib import Path
 
 import pytest
@@ -175,3 +176,24 @@ class TestIncludeRoot:
     def test_empty_file_list(self):
         f = _make_filter_with_root(["posts"])
         assert f.filter([]) == []
+
+    @pytest.mark.skipif(not hasattr(os, "symlink"), reason="symlink unsupported")
+    def test_include_root_ignores_symlink_target_outside_tree(self, tmp_path: Path):
+        # Reproduces cases like .venv/bin/python symlinks pointing to /opt/...
+        # which should not affect root-file detection.
+        root_file = tmp_path / "index.md"
+        root_file.write_text("---\npublish: true\n---\n", encoding="utf-8")
+
+        external_target = tmp_path.parent / "external-python"
+        external_target.write_text("python", encoding="utf-8")
+
+        venv_bin = tmp_path / ".venv" / "bin"
+        venv_bin.mkdir(parents=True)
+        symlink_file = venv_bin / "python"
+        symlink_file.symlink_to(external_target)
+
+        f = FolderFilter({"include_root": True, "included_folders": ["assets"]})
+        result = f.filter([root_file, symlink_file])
+
+        assert root_file in result
+        assert symlink_file not in result
